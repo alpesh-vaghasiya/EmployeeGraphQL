@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='utf-8' />
+<title>EmployeeQueryBenchmark-20260305-131739</title>
+
+<style type="text/css">
+	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
+	td, th { padding: 6px 13px; border: 1px solid #ddd; text-align: right; }
+	tr { background-color: #fff; border-top: 1px solid #ccc; }
+	tr:nth-child(even) { background: #f8f8f8; }
+</style>
+</head>
+<body>
+<pre><code>
+BenchmarkDotNet v0.15.8, Windows 10 (10.0.19045.3803/22H2/2022Update)
+Intel Core i5-4590 CPU 3.30GHz (Haswell), 1 CPU, 4 logical and 4 physical cores
+.NET SDK 9.0.102
+  [Host]     : .NET 8.0.15 (8.0.15, 8.0.1525.16413), X64 RyuJIT x86-64-v3
+  DefaultJob : .NET 8.0.15 (8.0.15, 8.0.1525.16413), X64 RyuJIT x86-64-v3
+</code></pre>
+<pre><code></code></pre>
+
+<table>
+<thead><tr><th>Method             </th><th>Mean</th><th>Error</th><th>StdDev</th><th>Median</th><th>Gen0</th><th>Allocated</th>
+</tr>
+</thead><tbody><tr><td>Tracking_NoPagination</td><td>268.0 &mu;s</td><td>5.34 &mu;s</td><td>7.99 &mu;s</td><td>266.0 &mu;s</td><td>1.4648</td><td>5.49 KB</td>
+</tr><tr><td>NoTracking_NoPagination</td><td>256.4 &mu;s</td><td>4.67 &mu;s</td><td>7.28 &mu;s</td><td>254.7 &mu;s</td><td>1.4648</td><td>5.66 KB</td>
+</tr><tr><td>Tracking_WithPagination</td><td>3,837.5 &mu;s</td><td>280.67 &mu;s</td><td>823.15 &mu;s</td><td>3,606.2 &mu;s</td><td>-</td><td>8.86 KB</td>
+</tr><tr><td>NoTracking_WithPagination</td><td>3,529.1 &mu;s</td><td>202.37 &mu;s</td><td>587.12 &mu;s</td><td>3,328.1 &mu;s</td><td>-</td><td>8.97 KB</td>
+</tr></tbody></table>
+</body>
+</html>
