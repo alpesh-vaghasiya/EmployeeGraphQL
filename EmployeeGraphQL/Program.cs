@@ -32,16 +32,30 @@ builder.Services.AddHttpClient();
 // -----------------------------------------
 // REDIS (WSL Redis Server)
 // -----------------------------------------
+// builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
+// {
+//     var config = new ConfigurationOptions
+//     {
+//         EndPoints = { "127.0.0.1:6379" },
+//         AbortOnConnectFail = false,
+//         ConnectRetry = 5,
+//         ConnectTimeout = 5000,
+//         SyncTimeout = 5000,
+//         AsyncTimeout = 5000
+//     };
+
+//     return ConnectionMultiplexer.Connect(config);
+// });
+
 builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
 {
     var config = new ConfigurationOptions
     {
-        EndPoints = { "127.0.0.1:6379" },
+        EndPoints = { "localhost:6379" },
         AbortOnConnectFail = false,
-        ConnectRetry = 5,
-        ConnectTimeout = 5000,
-        SyncTimeout = 5000,
-        AsyncTimeout = 5000
+        ConnectRetry = 10,
+        ConnectTimeout = 10000,
+        SyncTimeout = 10000
     };
 
     return ConnectionMultiplexer.Connect(config);
@@ -56,6 +70,7 @@ builder.Services.AddHostedService<CsvImportExecuteWorker>();
 
 builder.Services.AddSingleton<RedisStreamKaryakarProducer>();
 builder.Services.AddSingleton<RedisStreamProducer>();
+builder.Services.AddSingleton<RedisCacheService>();
 
 // TDD Import Services (MUST ADD)
 builder.Services.AddScoped<ImportJobService>();
