@@ -1,4 +1,3 @@
-using System.Threading.RateLimiting;
 using Api.GraphQL;
 using Api.GraphQL.Auth;
 using Api.GraphQL.Inputs;
@@ -32,50 +31,56 @@ builder.Services.AddHttpClient();
 // -----------------------------------------
 // REDIS (WSL Redis Server)
 // -----------------------------------------
+var redisSettings = builder.Configuration.GetSection("Redis").Get<RedisSettings>();
+
+if (redisSettings?.IsEnabled == true)
+{
+    builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
+    {
+        var config = new ConfigurationOptions
+        {
+            EndPoints = { redisSettings.Connection ?? "localhost:6379" },
+            AbortOnConnectFail = false,
+            ConnectRetry = 5,
+            ConnectTimeout = 5000
+        };
+
+        return ConnectionMultiplexer.Connect(config);
+    });
+}
+else
+{
+    // 👇 IMPORTANT: register dummy redis so DI does not fail
+    builder.Services.AddSingleton<IConnectionMultiplexer?>(sp => null);
+}
 // builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
 // {
 //     var config = new ConfigurationOptions
 //     {
-//         EndPoints = { "127.0.0.1:6379" },
+//         EndPoints = { "localhost:6379" },
 //         AbortOnConnectFail = false,
-//         ConnectRetry = 5,
-//         ConnectTimeout = 5000,
-//         SyncTimeout = 5000,
-//         AsyncTimeout = 5000
+//         ConnectRetry = 10,
+//         ConnectTimeout = 10000,
+//         SyncTimeout = 10000
 //     };
 
 //     return ConnectionMultiplexer.Connect(config);
 // });
 
-builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
-{
-    var config = new ConfigurationOptions
-    {
-        EndPoints = { "localhost:6379" },
-        AbortOnConnectFail = false,
-        ConnectRetry = 10,
-        ConnectTimeout = 10000,
-        SyncTimeout = 10000
-    };
-
-    return ConnectionMultiplexer.Connect(config);
-});
-
 // 1️⃣ Register FluentValidation
 builder.Services.AddHttpContextAccessor();
-
-builder.Services.AddHostedService<DepartmentImportWorker>();
-builder.Services.AddHostedService<CsvImportValidationWorker>();
-builder.Services.AddHostedService<CsvImportExecuteWorker>();
 
 builder.Services.AddSingleton<RedisStreamKaryakarProducer>();
 builder.Services.AddSingleton<RedisStreamProducer>();
 builder.Services.AddSingleton<RedisCacheService>();
 
-// TDD Import Services (MUST ADD)
+builder.Services.AddHostedService<DepartmentImportWorker>();
+builder.Services.AddHostedService<CsvImportValidationWorker>();
+builder.Services.AddHostedService<CsvImportExecuteWorker>();
+
+//Import Services (MUST ADD)
 builder.Services.AddScoped<ImportJobService>();
 builder.Services.AddScoped<KaryakarValidationService>();
-
 
 builder.Services.AddScoped<PersonService>();
 builder.Services.AddScoped<AsmPermissionService>();
@@ -85,6 +90,7 @@ builder.Services.Configure<MisModel>(builder.Configuration.GetSection("MisApi"))
 builder.Services.Configure<ASMModel>(builder.Configuration.GetSection("ASMService"));
 builder.Services.Configure<HangfireDepartmentImportSettings>(builder.Configuration.GetSection("HangfireJobs:DepartmentImport"));
 builder.Services.Configure<SsoModel>(builder.Configuration.GetSection("SsoService"));
+builder.Services.Configure<RedisSettings>(builder.Configuration.GetSection("Redis"));
 builder.Services.AddScoped<IMisApiService, MisApiService>();
 builder.Services.AddScoped<IAsmApiService, AsmApiService>();
 builder.Services.AddHttpClient<ISsoService, SsoService>();
@@ -113,31 +119,18 @@ builder.Services
     .AddTypeExtension<DepartmentImportMutation>()
     .AddTypeExtension<KaryakarImportMutation>()
     .AddTypeExtension<TemplateMutation>()
-    .AddUploadType()      // For file upload
+    .AddUploadType()
     .AddProjections()
     .AddFiltering()
     .AddSorting()
     .AddErrorFilter<ValidationExceptionErrorFilter>()
     .AddMaxExecutionDepthRule(5);
 
-
-
 // Validators
 builder.Services.AddValidatorsFromAssemblyContaining<TemplateFullInputValidator>();
 builder.Services.AddScoped<IValidator<DepartmentInput>, AddDepartmentInputValidator>();
 
 //Rate Limiting
-// builder.Services.AddRateLimiter(options =>
-// {
-//     options.AddFixedWindowLimiter("api", opt =>
-//     {
-//         opt.PermitLimit = 10;                     // max 100 requests
-//         opt.Window = TimeSpan.FromMinutes(1);      // per 1 minute
-//         opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
-//         opt.QueueLimit = 2;
-//     });
-// });
-
 builder.Services.AddRateLimiter(options =>
 {
     options.AddFixedWindowLimiter("api", opt =>
@@ -196,7 +189,6 @@ app.Use(async (context, next) =>
 
     await next();
 });
-
 
 // GraphQL Endpoint
 app.MapGraphQL("/graphql").RequireRateLimiting("api");

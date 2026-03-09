@@ -123,3 +123,10 @@ F:\NewImplimentation\EmployeeGraphQL\EmployeeGraphQL.Benchmarks\obj\Release\net8
 F:\NewImplimentation\EmployeeGraphQL\EmployeeGraphQL.Benchmarks\obj\Release\net8.0\EmployeeGraphQL.Benchmarks.pdb
 F:\NewImplimentation\EmployeeGraphQL\EmployeeGraphQL.Benchmarks\obj\Release\net8.0\EmployeeGraphQL.Benchmarks.genruntimeconfig.cache
 F:\NewImplimentation\EmployeeGraphQL\EmployeeGraphQL.Benchmarks\obj\Release\net8.0\ref\EmployeeGraphQL.Benchmarks.dll
+F:\NewImplimentation\EmployeeGraphQL\EmployeeGraphQL.Benchmarks\bin\Release\net8.0\HotChocolate.AspNetCore.Authorization.dll
+F:\NewImplimentation\EmployeeGraphQL\EmployeeGraphQL.Benchmarks\bin\Release\net8.0\Microsoft.IdentityModel.Abstractions.dll
+F:\NewImplimentation\EmployeeGraphQL\EmployeeGraphQL.Benchmarks\bin\Release\net8.0\Microsoft.IdentityModel.JsonWebTokens.dll
+F:\NewImplimentation\EmployeeGraphQL\EmployeeGraphQL.Benchmarks\bin\Release\net8.0\Microsoft.IdentityModel.Logging.dll
+F:\NewImplimentation\EmployeeGraphQL\EmployeeGraphQL.Benchmarks\bin\Release\net8.0\Microsoft.IdentityModel.Tokens.dll
+F:\NewImplimentation\EmployeeGraphQL\EmployeeGraphQL.Benchmarks\bin\Release\net8.0\System.IdentityModel.Tokens.Jwt.dll
+F:\NewImplimentation\EmployeeGraphQL\EmployeeGraphQL.Benchmarks\obj\Release\net8.0\EmployeeGraphQL.Benchmarks.sourcelink.json

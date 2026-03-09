@@ -6,12 +6,12 @@ using StackExchange.Redis;
 public class CsvImportExecuteWorker : BackgroundService
 {
     private readonly ILogger<CsvImportExecuteWorker> _logger;
-    private readonly IConnectionMultiplexer _redis;
+    private readonly IConnectionMultiplexer? _redis;
     private readonly IServiceScopeFactory _scopeFactory;
 
     public CsvImportExecuteWorker(
         ILogger<CsvImportExecuteWorker> logger,
-        IConnectionMultiplexer redis,
+        IConnectionMultiplexer? redis,
         IServiceScopeFactory scopeFactory)
     {
         _logger = logger;
@@ -21,11 +21,17 @@ public class CsvImportExecuteWorker : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var redisDb = _redis.GetDatabase();
+        if (_redis == null)
+        {
+            _logger.LogWarning("[Worker] Redis is disabled. CsvImportExecuteWorker will not run.");
+            return;
+        }
+
+        var redisDb = _redis?.GetDatabase();
         const string stream = "sampark:jobs:import-execute";
         const string group = "sampark-execute-group";
 
-        try { await redisDb.StreamCreateConsumerGroupAsync(stream, group, "0", true); }
+        try { await redisDb?.StreamCreateConsumerGroupAsync(stream, group, "0", true); }
         catch { }
 
         string consumer = $"exec-{Guid.NewGuid()}";

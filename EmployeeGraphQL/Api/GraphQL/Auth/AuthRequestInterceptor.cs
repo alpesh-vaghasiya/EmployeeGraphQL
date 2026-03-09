@@ -12,7 +12,7 @@ public class AuthRequestInterceptor : DefaultHttpRequestInterceptor
         CancellationToken cancellationToken)
     {
         var ssoService = context.RequestServices.GetRequiredService<ISsoService>();
-        var redis = context.RequestServices.GetRequiredService<RedisCacheService>();
+        var redis = context.RequestServices.GetService<RedisCacheService>();
 
         var authHeader = context.Request.Headers["Authorization"].FirstOrDefault();
 
@@ -42,7 +42,12 @@ public class AuthRequestInterceptor : DefaultHttpRequestInterceptor
         bool isValid = false;
 
         // Check Redis
-        var cachedToken = await redis.GetAsync(cacheKey);
+        string? cachedToken = null;
+
+        if (redis != null)
+        {
+            cachedToken = await redis.GetAsync(cacheKey);
+        }
 
         if (!string.IsNullOrEmpty(cachedToken) && cachedToken == token)
         {
@@ -63,7 +68,7 @@ public class AuthRequestInterceptor : DefaultHttpRequestInterceptor
                     var expiry = DateTimeOffset.FromUnixTimeSeconds(expUnix).UtcDateTime;
                     var remaining = expiry - DateTime.UtcNow;
 
-                    if (remaining.TotalMinutes > 0)
+                    if (remaining.TotalMinutes > 0 && redis != null)
                     {
                         await redis.SetAsync(cacheKey, token, remaining);
                     }

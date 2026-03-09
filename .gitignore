@@ -1,30 +1,41 @@
 # Build folders
+
 bin/
 obj/
 
+# BenchmarkDotNet
+
+BenchmarkDotNet.Artifacts/
+
 # Visual Studio
+
 .vs/
 *.user
 *.suo
 
-# Build outputs
-*.dll
-*.pdb
-*.exe
+# Rider / VSCode
 
-# Cache files
+.idea/
+.vscode/
+
+# Build outputs
+
+*.dll
+*.exe
+*.pdb
+
+# Cache / Logs
+
 *.cache
 *.log
 
 # NuGet
+
 *.nupkg
 *.nuget
 project.assets.json
 
-# Rider / VSCode
-.idea/
-.vscode/
-
 # OS files
+
 .DS_Store
 Thumbs.db

@@ -8,12 +8,12 @@ using StackExchange.Redis;
 public class CsvImportValidationWorker : BackgroundService
 {
     private readonly ILogger<CsvImportValidationWorker> _logger;
-    private readonly IConnectionMultiplexer _redis;
+    private readonly IConnectionMultiplexer? _redis;
     private readonly IServiceScopeFactory _scopeFactory;
 
     public CsvImportValidationWorker(
         ILogger<CsvImportValidationWorker> logger,
-        IConnectionMultiplexer redis,
+        IConnectionMultiplexer? redis,
         IServiceScopeFactory scopeFactory)
     {
         _logger = logger;
@@ -23,11 +23,16 @@ public class CsvImportValidationWorker : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var redisDb = _redis.GetDatabase();
+        if (_redis == null)
+        {
+            _logger.LogWarning("[Worker] Redis is disabled. CsvImportValidationWorker will not run.");
+            return;
+        }
+        var redisDb = _redis?.GetDatabase();
         const string stream = "sampark:jobs:import-validate";
         const string group = "sampark-validate-group";
 
-        try { await redisDb.StreamCreateConsumerGroupAsync(stream, group, "0", true); }
+        try { await redisDb?.StreamCreateConsumerGroupAsync(stream, group, "0", true); }
         catch { }
 
         string consumer = $"validate-{Guid.NewGuid()}";

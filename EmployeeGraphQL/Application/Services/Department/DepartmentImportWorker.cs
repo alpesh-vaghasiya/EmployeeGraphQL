@@ -8,13 +8,13 @@ namespace EmployeeGraphQL.Application.Services;
 
 public class DepartmentImportWorker : BackgroundService
 {
-    private readonly IConnectionMultiplexer _redis;
+    private readonly IConnectionMultiplexer? _redis;
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<DepartmentImportWorker> _logger;
     private readonly IHttpClientFactory _httpFactory;
 
     public DepartmentImportWorker(
-        IConnectionMultiplexer redis,
+        IConnectionMultiplexer? redis,
         IServiceScopeFactory scopeFactory,
         ILogger<DepartmentImportWorker> logger,
         IHttpClientFactory httpFactory)
@@ -29,6 +29,11 @@ public class DepartmentImportWorker : BackgroundService
     {
         _logger.LogInformation("[Worker] Department import worker started...");
 
+        if (_redis == null)
+        {
+            _logger.LogWarning("[Worker] Redis is disabled. DepartmentImportWorker will not run.");
+            return;
+        }
         var db = _redis.GetDatabase();
         string stream = "department:import:jobs";
         string group = "department-group";
