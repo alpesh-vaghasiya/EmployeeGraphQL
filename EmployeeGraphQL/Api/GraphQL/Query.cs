@@ -29,6 +29,7 @@ public class Query
     [UseProjection]
     [UseFiltering]
     [UseSorting]
+    [AllowAnonymous]
     public IQueryable<Department> GetDepartments(
         [Service] AppDbContext context)
         => context.Departments;
@@ -37,6 +38,7 @@ public class Query
     [UseProjection]
     [UseFiltering]
     [UseSorting]
+    [AllowAnonymous]
     public IQueryable<Department> GetDepartmentsNoTracking(
         [Service] AppDbContext context)
         => context.Departments.AsNoTracking();

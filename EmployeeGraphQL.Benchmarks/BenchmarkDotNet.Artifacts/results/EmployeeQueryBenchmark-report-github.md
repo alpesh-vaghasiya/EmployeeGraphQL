@@ -8,9 +8,9 @@ Intel Core i5-4590 CPU 3.30GHz (Haswell), 1 CPU, 4 logical and 4 physical cores
 
 
 ```
-| Method                    | Mean     | Error    | StdDev   | Median   | Gen0   | Allocated |
-|-------------------------- |---------:|---------:|---------:|---------:|-------:|----------:|
-| Tracking_NoPagination     | 161.2 μs |  2.91 μs |  2.72 μs | 161.1 μs | 0.9766 |   2.99 KB |
-| NoTracking_NoPagination   | 161.9 μs |  3.21 μs |  3.83 μs | 162.2 μs | 0.9766 |   3.02 KB |
-| Tracking_WithPagination   | 166.0 μs |  3.26 μs |  3.49 μs | 164.9 μs | 0.9766 |   3.05 KB |
-| NoTracking_WithPagination | 195.6 μs | 12.13 μs | 33.81 μs | 181.6 μs | 0.9766 |   3.06 KB |
+| Method                    | Mean     | Error   | StdDev  | Gen0   | Allocated |
+|-------------------------- |---------:|--------:|--------:|-------:|----------:|
+| Tracking_NoPagination     | 142.8 μs | 2.81 μs | 4.38 μs | 0.9766 |   2.99 KB |
+| NoTracking_NoPagination   | 136.2 μs | 0.80 μs | 0.71 μs | 0.9766 |   3.02 KB |
+| Tracking_WithPagination   | 135.7 μs | 0.56 μs | 0.49 μs | 0.9766 |   3.05 KB |
+| NoTracking_WithPagination | 137.6 μs | 1.69 μs | 1.50 μs | 0.9766 |   3.07 KB |
