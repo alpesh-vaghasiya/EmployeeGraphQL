@@ -173,7 +173,7 @@ public class Mutation
     // DEPARTMENT MUTATIONS
     // ---------------------------------------------------
 
-    public async Task<Department> AddDepartment(AddDepartmentInput input, [Service] IValidator<AddDepartmentInput> validator, CancellationToken ct, [Service] AppDbContext context)
+    public async Task<Department> AddDepartment(DepartmentInput input, [Service] IValidator<DepartmentInput> validator, CancellationToken ct, [Service] AppDbContext context)
     {
         // FluentValidation
         var result = await validator.ValidateAsync(input, ct);

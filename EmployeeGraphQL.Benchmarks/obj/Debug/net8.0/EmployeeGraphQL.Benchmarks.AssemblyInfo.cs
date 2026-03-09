@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("EmployeeGraphQL.Benchmarks")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+40b3d20e41599ea43faaf2e261e8dcc1eee9654b")]
 [assembly: System.Reflection.AssemblyProductAttribute("EmployeeGraphQL.Benchmarks")]
 [assembly: System.Reflection.AssemblyTitleAttribute("EmployeeGraphQL.Benchmarks")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

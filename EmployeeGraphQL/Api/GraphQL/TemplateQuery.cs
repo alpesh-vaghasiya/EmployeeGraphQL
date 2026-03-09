@@ -1,8 +1,6 @@
 using Api.GraphQL.Auth;
 using EmployeeGraphQL.Domain.Entities;
 using EmployeeGraphQL.Infrastructure.Data;
-using HotChocolate.Data;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace Api.GraphQL;
 
@@ -13,7 +11,6 @@ public partial class TemplateQuery
     [UseProjection]
     [UseFiltering]
     [UseSorting]
-    // [UsePaging]
     public IQueryable<Template> GetTemplates([Service] AppDbContext context)
         => context.Templates;
 

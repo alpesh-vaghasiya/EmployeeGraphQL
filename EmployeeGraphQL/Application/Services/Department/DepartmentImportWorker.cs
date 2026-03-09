@@ -1,11 +1,8 @@
 using EmployeeGraphQL.Infrastructure.Data;
-using Microsoft.Extensions.Hosting;
 using StackExchange.Redis;
-using Microsoft.Extensions.DependencyInjection;
 using CsvHelper;
 using CsvHelper.Configuration;
 using System.Globalization;
-using System.Net.Http;
 
 namespace EmployeeGraphQL.Application.Services;
 

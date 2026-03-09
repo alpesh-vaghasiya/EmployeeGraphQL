@@ -1,8 +1,3 @@
-using Microsoft.Extensions.Logging;
-using System;
-using System.Threading.Tasks;
-using EmployeeGraphQL.Infrastructure;   // <-- Add this (namespace of RedisStreamProducer)
-
 namespace EmployeeGraphQL.Application.Services
 {
     public class DepartmentScheduledJobService

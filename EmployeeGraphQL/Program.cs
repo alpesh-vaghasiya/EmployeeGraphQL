@@ -124,7 +124,7 @@ builder.Services
 
 // Validators
 builder.Services.AddValidatorsFromAssemblyContaining<TemplateFullInputValidator>();
-builder.Services.AddScoped<IValidator<AddDepartmentInput>, AddDepartmentInputValidator>();
+builder.Services.AddScoped<IValidator<DepartmentInput>, AddDepartmentInputValidator>();
 
 //Rate Limiting
 // builder.Services.AddRateLimiter(options =>
@@ -142,7 +142,7 @@ builder.Services.AddRateLimiter(options =>
 {
     options.AddFixedWindowLimiter("api", opt =>
     {
-        opt.PermitLimit = 3;        // allow only 3
+        opt.PermitLimit = 50;        // allow only 50
         opt.Window = TimeSpan.FromMinutes(1);
         opt.QueueLimit = 0;         // disable queue
     });

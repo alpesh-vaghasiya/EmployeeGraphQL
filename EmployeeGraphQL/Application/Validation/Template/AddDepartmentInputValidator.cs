@@ -1,7 +1,7 @@
 using Api.GraphQL.Inputs;
 using FluentValidation;
 
-public class AddDepartmentInputValidator : AbstractValidator<AddDepartmentInput>
+public class AddDepartmentInputValidator : AbstractValidator<DepartmentInput>
 {
     public AddDepartmentInputValidator()
     {
