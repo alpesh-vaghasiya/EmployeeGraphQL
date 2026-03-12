@@ -95,6 +95,9 @@ builder.Services.AddScoped<IMisApiService, MisApiService>();
 builder.Services.AddScoped<IAsmApiService, AsmApiService>();
 builder.Services.AddHttpClient<ISsoService, SsoService>();
 builder.Services.AddScoped<IProjectService, ProjectService>();
+builder.Services.AddScoped<CsvParserService>();
+builder.Services.AddScoped<SyncKaryakarValidationService>();
+builder.Services.AddScoped<KaryakarImportService>();
 
 
 // -----------------------------------------

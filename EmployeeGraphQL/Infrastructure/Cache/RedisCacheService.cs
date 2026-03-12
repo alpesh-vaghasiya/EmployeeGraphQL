@@ -1,3 +1,4 @@
+using System.Text.Json;
 using StackExchange.Redis;
 
 public class RedisCacheService
@@ -25,5 +26,27 @@ public class RedisCacheService
 
         var db = _redis.GetDatabase();
         await db.StringSetAsync(key, value, expiry);
+    }
+    public async Task StoreValidationAsync(string token, List<SyncRowValidationResult> results)
+    {
+        var db = _redis.GetDatabase();
+        var key = $"karyakar:validation:{token}";
+
+        var json = JsonSerializer.Serialize(results);
+
+        await db.StringSetAsync(key, json, TimeSpan.FromMinutes(15));
+    }
+
+    public async Task<List<SyncRowValidationResult>> GetValidationAsync(string token)
+    {
+        var db = _redis.GetDatabase();
+        var key = $"karyakar:validation:{token}";
+
+        var json = await db.StringGetAsync(key);
+
+        if (json.IsNullOrEmpty)
+            return null;
+
+        return JsonSerializer.Deserialize<List<SyncRowValidationResult>>(json);
     }
 }

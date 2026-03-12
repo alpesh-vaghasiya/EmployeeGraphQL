@@ -54,4 +54,12 @@ public class MisApiService : IMisApiService
 
         throw new Exception($"MIS error: {response.StatusCode} - {await response.Content.ReadAsStringAsync()}");
     }
+    public Task<bool> ValidateMisId(string misId)
+    {
+        // Example logic
+        if (string.IsNullOrWhiteSpace(misId))
+            return Task.FromResult(false);
+
+        return Task.FromResult(true);
+    }
 }
