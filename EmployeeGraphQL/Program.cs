@@ -128,7 +128,7 @@ builder.Services
     .AddMaxExecutionDepthRule(5);
 
 // Validators
-builder.Services.AddValidatorsFromAssemblyContaining<TemplateFullInputValidator>();
+builder.Services.AddScoped<IValidator<TemplateInput>, TemplateInputValidator>();
 builder.Services.AddScoped<IValidator<DepartmentInput>, AddDepartmentInputValidator>();
 builder.Services.AddScoped<IValidator<EmployeeInput>, EmployeeValidator>();
 

@@ -63,7 +63,7 @@ namespace Api.GraphQL
             entity.Id = id;
         }
 
-        protected override int GetEntityId(Employee entity)
+        protected override object GetEntityId(Employee entity)
         {
             return entity.Id;
         }

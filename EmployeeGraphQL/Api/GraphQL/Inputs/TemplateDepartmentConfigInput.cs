@@ -1,5 +1,8 @@
-public record TemplateDepartmentConfigInput(
-    long DepartmentId,
-    long? OwnerRoleId,
-    bool IsPrimary
-);
+public class TemplateDepartmentConfigInput
+{
+    public long DepartmentId { get; set; }
+
+    public long? OwnerRoleId { get; set; }
+
+    public bool IsPrimary { get; set; }
+}

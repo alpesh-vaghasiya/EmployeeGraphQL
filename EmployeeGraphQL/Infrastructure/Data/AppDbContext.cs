@@ -194,6 +194,22 @@ public partial class AppDbContext : DbContext
                 .HasMaxLength(255)
                 .HasDefaultValueSql("NULL::character varying")
                 .HasColumnName("updated_by");
+
+            entity.HasMany(e => e.TargetConfigs)
+            .WithOne(e => e.Template)
+            .HasForeignKey(e => e.TemplateId);
+
+            entity.HasMany(e => e.DepartmentConfigs)
+                .WithOne(e => e.Template)
+                .HasForeignKey(e => e.TemplateId);
+
+            entity.HasMany(e => e.TargetSurveys)
+                .WithOne(e => e.Template)
+                .HasForeignKey(e => e.TemplateId);
+
+            entity.HasMany(e => e.Documents)
+                .WithOne(e => e.Template)
+                .HasForeignKey(e => e.TemplateId);
         });
         // TEMPLATE TARGET CONFIG
         modelBuilder.Entity<TemplateTargetConfig>(entity =>
@@ -230,6 +246,10 @@ public partial class AppDbContext : DbContext
 
      entity.HasIndex(x => new { x.TemplateId, x.ConfigType })
            .IsUnique();
+     entity.HasOne(x => x.Template)
+ .WithMany(t => t.TargetConfigs)
+ .HasForeignKey(x => x.TemplateId)
+ .HasConstraintName("template_target_config_template_id_fkey");
  });
 
         // TEMPLATE DEPARTMENT CONFIG
@@ -254,6 +274,9 @@ public partial class AppDbContext : DbContext
 
 
             entity.HasIndex(x => new { x.TemplateId, x.DepartmentId }).IsUnique();
+            entity.HasOne(x => x.Template)
+    .WithMany(t => t.DepartmentConfigs)
+    .HasForeignKey(x => x.TemplateId);
         });
 
         // TEMPLATE TARGET SURVEY
@@ -282,6 +305,9 @@ public partial class AppDbContext : DbContext
 
             entity.HasIndex(x => new { x.TemplateId, x.GssFormId, x.ConfigType })
                   .IsUnique();
+            entity.HasOne(x => x.Template)
+.WithMany(t => t.TargetSurveys)
+.HasForeignKey(x => x.TemplateId);
         });
 
         // TEMPLATE DOCUMENT
@@ -310,6 +336,9 @@ public partial class AppDbContext : DbContext
 
 
             entity.HasIndex(x => x.TemplateId);
+            entity.HasOne(x => x.Template)
+    .WithMany(t => t.Documents)
+    .HasForeignKey(x => x.TemplateId);
         });
 
         modelBuilder.Entity<ProjectKaryakar>(entity =>

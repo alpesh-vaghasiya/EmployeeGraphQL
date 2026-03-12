@@ -10,7 +10,7 @@ namespace Api.GraphQL
     {
         protected abstract TEntity MapInputToEntity(TInput input, TEntity? existingEntity = null);
         protected abstract void SetEntityId(TEntity entity, int id);
-        protected abstract int GetEntityId(TEntity entity);
+        protected abstract object GetEntityId(TEntity entity);
         protected virtual IQueryable<TEntity> IncludeNavigation(IQueryable<TEntity> query)
         {
             return query;
@@ -26,7 +26,8 @@ namespace Api.GraphQL
             var validationResult = await validator.ValidateAsync(input, cancellationToken);
             if (!validationResult.IsValid)
             {
-                throw new ValidationException(validationResult.Errors);
+                var errors = validationResult.Errors.Select(e => e.ErrorMessage).ToList();
+                throw new GraphQLException(ErrorBuilder.New().SetMessage("Validation failed").SetCode("VALIDATION_ERROR").SetExtension("errors", errors).Build());
             }
 
             // Map input to entity
@@ -48,21 +49,23 @@ namespace Api.GraphQL
         {
             var validationResult = await validator.ValidateAsync(input, cancellationToken);
             if (!validationResult.IsValid)
-                throw new ValidationException(validationResult.Errors);
+            {
+                var errors = validationResult.Errors.Select(e => e.ErrorMessage).ToList();
+                throw new GraphQLException(ErrorBuilder.New().SetMessage("Validation failed").SetCode("VALIDATION_ERROR").SetExtension("errors", errors).Build());
+            }
 
             IQueryable<TEntity> query = db.Set<TEntity>();
 
             // include navigation properties if overridden
             query = IncludeNavigation(query);
 
-            // ⭐ Detect primary key dynamically
             var entityType = db.Model.FindEntityType(typeof(TEntity));
-            var primaryKey = entityType.FindPrimaryKey();
-            var keyProperty = primaryKey.Properties.First().Name;
+            var keyProperty = entityType.FindPrimaryKey().Properties.First();
 
-            var entity = await query.FirstOrDefaultAsync(
-                e => EF.Property<object>(e, keyProperty).Equals(id),
-                cancellationToken);
+            var keyType = keyProperty.ClrType;
+            var convertedId = Convert.ChangeType(id, keyType);
+
+            var entity = await query.FirstOrDefaultAsync(e => EF.Property<object>(e, keyProperty.Name).Equals(convertedId), cancellationToken);
 
             if (entity == null)
                 throw new Exception($"{typeof(TEntity).Name} with ID {id} not found");
@@ -82,7 +85,7 @@ namespace Api.GraphQL
             var entity = await db.Set<TEntity>().FindAsync(new object[] { id }, cancellationToken);
             if (entity == null)
             {
-                throw new Exception($"Entity with ID {id} not found");
+                throw new GraphQLException(ErrorBuilder.New().SetMessage($"Entity with ID {id} not found").SetCode("NOT_FOUND").Build());
             }
 
             db.Set<TEntity>().Remove(entity);
