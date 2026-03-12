@@ -80,40 +80,52 @@ public partial class AppDbContext : DbContext
      });
 
         modelBuilder.Entity<Project>(entity =>
-{
-    entity.ToTable("project");
+   {
+       entity.ToTable("project");
 
-    entity.HasKey(e => e.ProjectId);
+       entity.HasKey(e => e.ProjectId);
 
-    entity.Property(e => e.ProjectId).HasColumnName("project_id");
-    entity.Property(e => e.ProjectUucode).HasColumnName("project_uucode");
-    entity.Property(e => e.TemplateId).HasColumnName("template_id");
+       entity.Property(e => e.ProjectId).HasColumnName("project_id");
+       entity.Property(e => e.ProjectUucode).HasColumnName("project_uucode");
+       entity.Property(e => e.TemplateId).HasColumnName("template_id");
 
-    entity.Property(e => e.Title).HasColumnName("title");
-    entity.Property(e => e.Description).HasColumnName("description");
-    entity.Property(e => e.Status).HasColumnName("status");
+       entity.Property(e => e.Title).HasColumnName("title");
+       entity.Property(e => e.Description).HasColumnName("description");
+       entity.Property(e => e.Status).HasColumnName("status");
 
-    entity.Property(e => e.LocationId).HasColumnName("location_id");
+       entity.Property(e => e.LocationId).HasColumnName("location_id");
 
-    entity.Property(e => e.ProjectStartDate).HasColumnName("project_start_date");
-    entity.Property(e => e.ProjectEndDate).HasColumnName("project_end_date");
+       entity.Property(e => e.ProjectStartDate).HasColumnName("project_start_date");
+       entity.Property(e => e.ProjectEndDate).HasColumnName("project_end_date");
 
-    entity.Property(e => e.Tags).HasColumnName("tags").HasColumnType("jsonb");
-    entity.Property(e => e.ReminderFrequency).HasColumnName("reminder_frequency");
-    entity.Property(e => e.ReminderFrequencyConfig)
-        .HasColumnName("reminder_frequency_config")
-        .HasColumnType("jsonb");
+       entity.Property(e => e.Tags)
+           .HasColumnName("tags")
+           .HasColumnType("jsonb");
 
-    entity.Property(e => e.CreatedAt).HasColumnName("created_at");
-    entity.Property(e => e.CreatedBy).HasColumnName("created_by");
-    entity.Property(e => e.UpdatedAt).HasColumnName("updated_at");
-    entity.Property(e => e.UpdatedBy).HasColumnName("updated_by");
+       entity.Property(e => e.ReminderFrequency)
+           .HasColumnName("reminder_frequency");
 
-    // ⭐ CORRECT — use entity here, not modelBuilder
-    entity.HasMany(p => p.Documents)
-          .WithOne(d => d.Project)
-          .HasForeignKey(d => d.ProjectId);
-});
+       entity.Property(e => e.ReminderFrequencyConfig)
+           .HasColumnName("reminder_frequency_config")
+           .HasColumnType("jsonb");
+
+       entity.Property(e => e.CreatedAt).HasColumnName("created_at");
+       entity.Property(e => e.CreatedBy).HasColumnName("created_by");
+       entity.Property(e => e.UpdatedAt).HasColumnName("updated_at");
+       entity.Property(e => e.UpdatedBy).HasColumnName("updated_by");
+
+       // ⭐ Project → Template FK
+       entity.HasOne(p => p.Template)
+             .WithMany(t => t.Projects)
+             .HasForeignKey(p => p.TemplateId)
+             .HasConstraintName("fk_project_template")
+             .OnDelete(DeleteBehavior.Restrict);
+
+       // ⭐ Project → Documents
+       entity.HasMany(p => p.Documents)
+             .WithOne(d => d.Project)
+             .HasForeignKey(d => d.ProjectId);
+   });
 
         modelBuilder.Entity<EmployeeProject>(entity =>
  {

@@ -52,4 +52,5 @@ public partial class Template
     public List<TemplateDepartmentConfig> DepartmentConfigs { get; set; } = new();
     public List<TemplateTargetSurvey> TargetSurveys { get; set; } = new();
     public List<TemplateDocument> Documents { get; set; } = new();
+    public ICollection<Project> Projects { get; set; } = new List<Project>();
 }

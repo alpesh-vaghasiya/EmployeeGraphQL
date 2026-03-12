@@ -94,6 +94,7 @@ builder.Services.Configure<RedisSettings>(builder.Configuration.GetSection("Redi
 builder.Services.AddScoped<IMisApiService, MisApiService>();
 builder.Services.AddScoped<IAsmApiService, AsmApiService>();
 builder.Services.AddHttpClient<ISsoService, SsoService>();
+builder.Services.AddScoped<IProjectService, ProjectService>();
 
 
 // -----------------------------------------
@@ -121,6 +122,7 @@ builder.Services
     .AddTypeExtension<TemplateMutation>()
     .AddTypeExtension<EmployeeMutation>()
     .AddTypeExtension<DepartmentMutation>()
+    .AddTypeExtension<ProjectMutation>()
     .AddUploadType()
     .AddProjections()
     .AddFiltering()
@@ -132,6 +134,7 @@ builder.Services
 builder.Services.AddScoped<IValidator<TemplateInput>, TemplateInputValidator>();
 builder.Services.AddScoped<IValidator<DepartmentInput>, DepartmentInputValidator>();
 builder.Services.AddScoped<IValidator<EmployeeInput>, EmployeeValidator>();
+builder.Services.AddScoped<IValidator<ProjectInput>, ProjectInputValidator>();
 
 //Rate Limiting
 builder.Services.AddRateLimiter(options =>

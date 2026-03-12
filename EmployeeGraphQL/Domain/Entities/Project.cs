@@ -36,4 +36,5 @@ public partial class Project
     public ICollection<ProjectKaryakarPair> KaryakarPairs { get; set; } = new List<ProjectKaryakarPair>();
     public ICollection<ProjectDocument> Documents { get; set; } = new List<ProjectDocument>();
     public ICollection<EmployeeProject>? EmployeeProjects { get; set; }
+    public Template Template { get; set; } = null!;
 }

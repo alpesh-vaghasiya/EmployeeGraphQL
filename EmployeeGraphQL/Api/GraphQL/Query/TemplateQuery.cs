@@ -8,6 +8,7 @@ namespace Api.GraphQL;
 public partial class TemplateQuery
 {
     // Templates
+    [UsePaging(IncludeTotalCount = true)]
     [UseProjection]
     [UseFiltering]
     [UseSorting]
