@@ -120,6 +120,7 @@ builder.Services
     .AddTypeExtension<KaryakarImportMutation>()
     .AddTypeExtension<TemplateMutation>()
     .AddTypeExtension<EmployeeMutation>()
+    .AddTypeExtension<DepartmentMutation>()
     .AddUploadType()
     .AddProjections()
     .AddFiltering()
@@ -129,7 +130,7 @@ builder.Services
 
 // Validators
 builder.Services.AddScoped<IValidator<TemplateInput>, TemplateInputValidator>();
-builder.Services.AddScoped<IValidator<DepartmentInput>, AddDepartmentInputValidator>();
+builder.Services.AddScoped<IValidator<DepartmentInput>, DepartmentInputValidator>();
 builder.Services.AddScoped<IValidator<EmployeeInput>, EmployeeValidator>();
 
 //Rate Limiting
