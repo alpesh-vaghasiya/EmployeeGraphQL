@@ -40,11 +40,11 @@ public class Mutation
         // Assign multiple projects
         if (input.ProjectIds != null)
         {
-            var projects = await context.Projects.Where(x => input.ProjectIds.Contains((int)x.ProjectId)).ToListAsync();
+            var employeeProjects = await context.EmployeeProjects.Where(x => input.ProjectIds.Contains((int)x.ProjectId)).ToListAsync();
 
-            foreach (var project in projects)
+            foreach (var project in employeeProjects)
             {
-                emp.Projects.Add(project);
+                emp.EmployeeProjects.Add(project);
             }
 
             await context.SaveChangesAsync();
@@ -55,9 +55,9 @@ public class Mutation
     }
 
     // [UseDbContext(typeof(AppDbContext))]
-    public async Task<Employee> UpdateEmployee(UpdateEmployeeInput input, [Service] AppDbContext context)
+    public async Task<Employee> UpdateEmployee(int id, UpdateEmployeeInput input, [Service] AppDbContext context)
     {
-        var emp = await context.Employees.FindAsync(input.Id);
+        var emp = await context.Employees.FindAsync(id);
         if (emp == null)
             throw new GraphQLException(ErrorBuilder.New().SetMessage("Employee not found.").SetCode("VALIDATION_ERROR").Build());
 
@@ -87,35 +87,35 @@ public class Mutation
         {
             // Load current projects
             await context.Entry(emp)
-                .Collection(e => e.Projects)
+                .Collection(e => e.EmployeeProjects)
                 .LoadAsync();
 
-            var existingProjectIds = emp.Projects.Select(p => p.ProjectId).ToList();
+            var existingProjectIds = emp.EmployeeProjects.Select(p => p.ProjectId).ToList();
 
             // 1️⃣ Remove deleted projects
-            var projectsToRemove = emp.Projects
+            var projectsToRemove = emp.EmployeeProjects
                 .Where(p => !input.ProjectIds.Contains((int)p.ProjectId))
                 .ToList();
 
             foreach (var project in projectsToRemove)
             {
-                emp.Projects.Remove(project);
+                emp.EmployeeProjects.Remove(project);
             }
 
             // 2️⃣ Add new projects
             var projectsToAddIds = input.ProjectIds
-                .Where(id => !existingProjectIds.Contains(id))
+                .Where(id => !existingProjectIds.Contains((int)id))
                 .ToList();
 
             if (projectsToAddIds.Any())
             {
-                var projectsToAdd = await context.Projects
+                var projectsToAdd = await context.EmployeeProjects
                     .Where(p => projectsToAddIds.Contains((int)p.ProjectId))
                     .ToListAsync();
 
                 foreach (var project in projectsToAdd)
                 {
-                    emp.Projects.Add(project);
+                    emp.EmployeeProjects.Add(project);
                 }
             }
         }
@@ -147,22 +147,22 @@ public class Mutation
     [Service] AppDbContext context)
     {
         var employee = await context.Employees
-            .Include(e => e.Projects)
+            .Include(e => e.EmployeeProjects)
             .FirstOrDefaultAsync(e => e.Id == employeeId);
 
         if (employee == null)
             throw new GraphQLException(ErrorBuilder.New().SetMessage("Employee not found.").SetCode("VALIDATION_ERROR").Build());
 
-        var project = await context.Projects
+        var project = await context.EmployeeProjects
             .FirstOrDefaultAsync(p => p.ProjectId == projectId);
 
         if (project == null)
             throw new GraphQLException(ErrorBuilder.New().SetMessage("Project not found.").SetCode("VALIDATION_ERROR").Build());
 
         // Check if already assigned
-        if (!employee.Projects.Any(p => p.ProjectId == projectId))
+        if (!employee.EmployeeProjects.Any(p => p.ProjectId == projectId))
         {
-            employee.Projects.Add(project);
+            employee.EmployeeProjects.Add(project);
             await context.SaveChangesAsync();
         }
 
@@ -173,22 +173,27 @@ public class Mutation
     // DEPARTMENT MUTATIONS
     // ---------------------------------------------------
 
-    public async Task<Department> AddDepartment(DepartmentInput input, [Service] IValidator<DepartmentInput> validator, CancellationToken ct, [Service] AppDbContext context)
+    public async Task<Department> AddDepartment(
+    DepartmentInput input,
+    [Service] AppDbContext db,
+    [Service] IValidator<DepartmentInput> validator,
+     CancellationToken cancellationToken
+     )
     {
         // FluentValidation
-        var result = await validator.ValidateAsync(input, ct);
+        var result = await validator.ValidateAsync(input, cancellationToken);
 
         if (!result.IsValid)
             throw new ValidationException(result.Errors);
 
         var name = input.Name.Trim();
 
-        if (await context.Departments.AnyAsync(x => x.Name == name))
+        if (await db.Departments.AnyAsync(x => x.Name == name))
             throw new GraphQLException(ErrorBuilder.New().SetMessage("Department name already exists.").SetCode("VALIDATION_ERROR").Build());
 
         var dept = new Department { Name = name };
-        context.Departments.Add(dept);
-        await context.SaveChangesAsync();
+        db.Departments.Add(dept);
+        await db.SaveChangesAsync();
         return dept;
     }
 

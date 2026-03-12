@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Domain.Entities;
 
 namespace EmployeeGraphQL.Domain.Entities;
 
@@ -17,5 +18,5 @@ public partial class Employee
 
     public virtual Department Department { get; set; } = null!;
 
-    public virtual ICollection<Project> Projects { get; set; } = new List<Project>();
+    public virtual ICollection<EmployeeProject> EmployeeProjects { get; set; } = new List<EmployeeProject>();
 }

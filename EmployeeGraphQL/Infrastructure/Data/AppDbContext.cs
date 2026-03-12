@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Domain.Entities;
 using EmployeeGraphQL.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
@@ -28,6 +29,8 @@ public partial class AppDbContext : DbContext
     public DbSet<ImportRecord> ImportRecords { get; set; }
     public DbSet<ProjectKaryakar> ProjectKaryakars { get; set; }
 
+    public DbSet<EmployeeProject> EmployeeProjects { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder
@@ -51,58 +54,30 @@ public partial class AppDbContext : DbContext
         });
 
         modelBuilder.Entity<Employee>(entity =>
-{
-    entity.HasKey(e => e.Id).HasName("employee_pkey");
+     {
+         entity.HasKey(e => e.Id).HasName("employee_pkey");
 
-    entity.ToTable("employee");
+         entity.ToTable("employee");
 
-    entity.HasIndex(e => e.Email, "employee_email_key").IsUnique();
-    entity.HasIndex(e => e.DepartmentId, "idx_employee_department");
+         entity.HasIndex(e => e.Email, "employee_email_key").IsUnique();
+         entity.HasIndex(e => e.DepartmentId, "idx_employee_department");
 
-    entity.Property(e => e.Id).HasColumnName("id");
-    entity.Property(e => e.DepartmentId).HasColumnName("department_id");
-    entity.Property(e => e.Email).HasMaxLength(150).HasColumnName("email");
-    entity.Property(e => e.Name).HasMaxLength(150).HasColumnName("name");
-    entity.Property(e => e.Salary).HasPrecision(12, 2).HasColumnName("salary");
+         entity.Property(e => e.Id).HasColumnName("id");
+         entity.Property(e => e.DepartmentId).HasColumnName("department_id");
+         entity.Property(e => e.Email).HasMaxLength(150).HasColumnName("email");
+         entity.Property(e => e.Name).HasMaxLength(150).HasColumnName("name");
+         entity.Property(e => e.Salary).HasPrecision(12, 2).HasColumnName("salary");
 
-    entity.HasOne(d => d.Department).WithMany(p => p.Employees)
-        .HasForeignKey(d => d.DepartmentId)
-        .HasConstraintName("employee_department_id_fkey");
+         entity.HasOne(d => d.Department)
+             .WithMany(p => p.Employees)
+             .HasForeignKey(d => d.DepartmentId)
+             .HasConstraintName("employee_department_id_fkey");
 
-    // ⭐ FIXED MANY-TO-MANY MAPPING
-    entity.HasMany(e => e.Projects)
-        .WithMany(p => p.Employees)
-        .UsingEntity<Dictionary<string, object>>(
-            "employee_project",
-
-            // RIGHT SIDE (Project)
-            j => j
-                .HasOne<Project>()
-                .WithMany()
-                .HasForeignKey("project_id")
-                .HasConstraintName("employee_project_project_id_fkey"),
-
-            // LEFT SIDE (Employee)
-            j => j
-                .HasOne<Employee>()
-                .WithMany()
-                .HasForeignKey("employee_id")
-                .HasConstraintName("employee_project_employee_id_fkey"),
-
-            j =>
-            {
-                j.HasKey("employee_id", "project_id")
-                 .HasName("employee_project_pkey");
-
-                j.ToTable("employee_project");
-
-                j.HasIndex(new[] { "employee_id" }, "idx_employeeproject_employee");
-                j.HasIndex(new[] { "project_id" }, "idx_employeeproject_project");
-
-                j.IndexerProperty<int>("employee_id").HasColumnName("employee_id");
-                j.IndexerProperty<long>("project_id").HasColumnName("project_id");
-            });
-});
+         // ⭐ RELATION WITH EmployeeProject (JOIN TABLE)
+         entity.HasMany(e => e.EmployeeProjects)
+             .WithOne(ep => ep.Employee)
+             .HasForeignKey(ep => ep.EmployeeId);
+     });
 
         modelBuilder.Entity<Project>(entity =>
 {
@@ -139,6 +114,24 @@ public partial class AppDbContext : DbContext
           .WithOne(d => d.Project)
           .HasForeignKey(d => d.ProjectId);
 });
+
+        modelBuilder.Entity<EmployeeProject>(entity =>
+ {
+     entity.ToTable("employee_project");
+
+     entity.HasKey(e => new { e.EmployeeId, e.ProjectId });
+
+     entity.Property(e => e.EmployeeId).HasColumnName("employee_id");
+     entity.Property(e => e.ProjectId).HasColumnName("project_id");
+
+     entity.HasOne(e => e.Employee)
+           .WithMany(e => e.EmployeeProjects)
+           .HasForeignKey(e => e.EmployeeId);
+
+     entity.HasOne(e => e.Project)
+           .WithMany(p => p.EmployeeProjects)
+           .HasForeignKey(e => e.ProjectId);
+ });
 
         modelBuilder.Entity<Template>(entity =>
         {

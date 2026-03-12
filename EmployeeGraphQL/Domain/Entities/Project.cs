@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
+using Domain.Entities;
 
 namespace EmployeeGraphQL.Domain.Entities;
 
@@ -30,9 +31,9 @@ public partial class Project
     public string? UpdatedBy { get; set; }
 
     // ⭐ Navigation Properties
-    public virtual ICollection<Employee> Employees { get; set; } = new List<Employee>();
     public ICollection<ProjectFamily> Families { get; set; } = new List<ProjectFamily>();
     public ICollection<ProjectKaryakar> Karyakars { get; set; } = new List<ProjectKaryakar>();
     public ICollection<ProjectKaryakarPair> KaryakarPairs { get; set; } = new List<ProjectKaryakarPair>();
     public ICollection<ProjectDocument> Documents { get; set; } = new List<ProjectDocument>();
+    public ICollection<EmployeeProject>? EmployeeProjects { get; set; }
 }
