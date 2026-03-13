@@ -30,6 +30,7 @@ public partial class AppDbContext : DbContext
     public DbSet<ProjectKaryakar> ProjectKaryakars { get; set; }
 
     public DbSet<EmployeeProject> EmployeeProjects { get; set; }
+    public DbSet<ProjectSchedule> ProjectSchedules { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -605,6 +606,29 @@ public partial class AppDbContext : DbContext
             .Property(x => x.Status)
             .HasColumnName("status");
         OnModelCreatingPartial(modelBuilder);
+
+        modelBuilder.Entity<ProjectSchedule>(entity =>
+           {
+               entity.ToTable("project_schedule");
+
+               entity.HasKey(e => e.ProjectScheduleId);
+
+               entity.Property(e => e.ProjectScheduleId)
+                   .HasColumnName("project_schedule_id");
+
+               entity.Property(e => e.TemplateId)
+                   .HasColumnName("template_id");
+
+               entity.Property(e => e.ScheduledDate)
+                   .HasColumnName("scheduled_date");
+
+               entity.Property(e => e.Status)
+                   .HasColumnName("status");
+
+               entity.Property(e => e.CreatedAt)
+                   .HasColumnName("created_at");
+           });
+
     }
 
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder);

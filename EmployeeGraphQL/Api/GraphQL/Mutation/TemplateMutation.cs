@@ -44,7 +44,9 @@ namespace Api.GraphQL
                 ? DateOnly.FromDateTime(input.EndDate.Value)
                 : null;
 
-            entity.ProjectRepeateFrequencyConfig = input.ProjectRepeateFrequencyConfig;
+            entity.ProjectRepeateFrequencyConfig = input.ProjectRepeateFrequencyConfig != null
+        ? JsonSerializer.Serialize(input.ProjectRepeateFrequencyConfig)
+        : null;
             entity.ReminderValue = input.ReminderValue;
             entity.ReminderFrequencyConfig = input.ReminderFrequencyConfig;
             entity.CustomReminder = input.CustomReminder;
@@ -294,6 +296,57 @@ namespace Api.GraphQL
             CancellationToken cancellationToken)
         {
             return await Delete(id, db, cancellationToken);
+        }
+        public async Task<Template> PublishTemplate(int id, [Service] AppDbContext db, [Service] IFrequencyService frequencyService, CancellationToken cancellationToken)
+        {
+            var template = await db.Templates
+                .FirstOrDefaultAsync(x => x.TemplateId == id, cancellationToken);
+
+            if (template == null)
+                throw new GraphQLException(ErrorBuilder.New().SetMessage("Template not found").SetCode("NOT_FOUND").Build());
+
+            if (template.Status == "PUBLISH")
+                throw new GraphQLException(ErrorBuilder.New().SetMessage("Template already published").SetCode("INVALID_OPERATION").Build());
+
+            if (string.IsNullOrEmpty(template.ProjectRepeateFrequencyConfig))
+                throw new GraphQLException(ErrorBuilder.New().SetMessage("Frequency configuration not found").SetCode("INVALID_DATA").Build());
+
+            ProjectFrequencyInput? config;
+
+            try
+            {
+                config = JsonSerializer.Deserialize<ProjectFrequencyInput>(
+                    template.ProjectRepeateFrequencyConfig);
+            }
+            catch
+            {
+                throw new GraphQLException(ErrorBuilder.New().SetMessage("Invalid frequency configuration").SetCode("JSON_PARSE_ERROR").Build());
+            }
+
+            if (config == null)
+                throw new GraphQLException(ErrorBuilder.New().SetMessage("Frequency configuration is empty").SetCode("INVALID_DATA").Build());
+
+            var dates = frequencyService.GenerateDates(config);
+
+            if (dates.Count == 0)
+                throw new GraphQLException(ErrorBuilder.New().SetMessage("No schedule dates generated").SetCode("INVALID_FREQUENCY").Build());
+
+            template.Status = "PUBLISH";
+
+            foreach (var date in dates)
+            {
+                db.ProjectSchedules.Add(new ProjectSchedule
+                {
+                    TemplateId = (int)template.TemplateId,
+                    ScheduledDate = date,
+                    Status = "PENDING",
+                    CreatedAt = DateTime.UtcNow
+                });
+            }
+
+            await db.SaveChangesAsync(cancellationToken);
+
+            return template;
         }
     }
 }

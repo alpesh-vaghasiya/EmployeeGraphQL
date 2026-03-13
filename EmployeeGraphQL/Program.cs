@@ -1,6 +1,7 @@
 using Api.GraphQL;
 using Api.GraphQL.Auth;
 using Api.GraphQL.Inputs;
+using Application.Services;
 using EmployeeGraphQL.Application.Services;
 using EmployeeGraphQL.Application.Settings;
 using EmployeeGraphQL.GraphQL.Errors;
@@ -95,6 +96,7 @@ builder.Services.AddScoped<IMisApiService, MisApiService>();
 builder.Services.AddScoped<IAsmApiService, AsmApiService>();
 builder.Services.AddHttpClient<ISsoService, SsoService>();
 builder.Services.AddScoped<IProjectService, ProjectService>();
+builder.Services.AddScoped<IFrequencyService, FrequencyService>();
 builder.Services.AddScoped<CsvParserService>();
 builder.Services.AddScoped<SyncKaryakarValidationService>();
 builder.Services.AddScoped<KaryakarImportService>();
