@@ -126,6 +126,7 @@ builder.Services
     .AddTypeExtension<EmployeeMutation>()
     .AddTypeExtension<DepartmentMutation>()
     .AddTypeExtension<ProjectMutation>()
+    .AddTypeExtension<ProjectQuery>()
     .AddUploadType()
     .AddProjections()
     .AddFiltering()

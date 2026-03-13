@@ -1,18 +1,60 @@
 using Api.GraphQL.Inputs;
+using Dapper;
 using EmployeeGraphQL.Domain.Entities;
 using EmployeeGraphQL.Infrastructure.Data;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 
 public class ProjectService : IProjectService
 {
     private readonly AppDbContext _db;
     private readonly IValidator<ProjectInput> _validator;
+    private readonly IConfiguration _config;
+    private readonly string _connectionString;
 
-    public ProjectService(AppDbContext db, IValidator<ProjectInput> validator)
+    public ProjectService(AppDbContext db, IValidator<ProjectInput> validator, IConfiguration config)
     {
         _db = db;
         _validator = validator;
+        _config = config;
+        _connectionString = config.GetConnectionString("DefaultConnection");
+    }
+
+    public async Task<PagedResult<ProjectResponse>> Projects(long departmentId, QueryOptions options)
+    {
+        using var connection = new NpgsqlConnection(_connectionString);
+
+        var offset = (options.Page - 1) * options.PageSize;
+
+        var sortColumn = options.SortBy?.ToLower() switch
+        {
+            "name" => "p.title",
+            "startdate" => "p.project_start_date",
+            "enddate" => "p.project_end_date",
+            "status" => "p.status",
+            _ => "p.created_at"
+        };
+
+        var sortOrder = options.SortOrder?.ToLower() == "asc" ? "ASC" : "DESC";
+
+        var sql = string.Format(ProjectQueries.GetProjects, sortColumn, sortOrder);
+
+        var parameters = new
+        {
+            DepartmentId = departmentId,
+            Search = options.Search,
+            Status = options.Status,
+            PageSize = options.PageSize,
+            Offset = offset
+        };
+
+        return await connection.QueryPagedAsync<ProjectResponse>(
+            sql,
+            parameters,
+            options.Page,
+            options.PageSize
+        );
     }
 
     // CREATE

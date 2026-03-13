@@ -50,20 +50,6 @@ public class Query
         => context.Departments.Where(d => d.Id == id);
 
 
-    // Projects
-    [UseProjection]
-    [UseFiltering]
-    [UseSorting]
-    [AllowAnonymous]
-    public IQueryable<Project> GetProjects(
-        [Service] AppDbContext context)
-        => context.Projects;
-
-    [UseProjection]
-    public IQueryable<Project> GetProjectById(
-        int id,
-        [Service] AppDbContext context)
-        => context.Projects.Where(p => p.ProjectId == id);
 
     public async Task<IEnumerable<PersonSearch>> GetPersonSearch(
     PersonSearchInput input,
