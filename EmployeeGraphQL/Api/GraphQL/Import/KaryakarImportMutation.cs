@@ -78,6 +78,7 @@ public class KaryakarImportMutation
     // STEP 2: IMPORT VALIDATED RECORDS
     public async Task<string> ImportKaryakarCsvSync(
         string validationToken,
+        long projectId,
         [Service] RedisCacheService cache,
         [Service] KaryakarImportService importService)
     {
@@ -94,8 +95,77 @@ public class KaryakarImportMutation
             return "No valid records to import";
 
         // Insert records
-        await importService.InsertKaryakarAsync(validRecords);
+        await importService.InsertKaryakarAsync(projectId, validRecords);
 
         return $"IMPORT COMPLETED. Inserted: {validRecords.Count}";
+    }
+    public async Task<ImportKaryakarResponse> ImportKaryakarCsvAuto(
+    string fileUrl,
+    [Service] CsvParserService parser,
+    [Service] SyncKaryakarValidationService validator,
+    [Service] RedisCacheService cache,
+    [Service] IMisApiService misService,
+    [Service] ImportJobService jobService,
+    [Service] RedisStreamKaryakarProducer producer)
+    {
+        var rows = await parser.ParseAsync(fileUrl);
+
+        // SYNC MODE
+        if (rows.Count <= 100)
+        {
+            var validationResults = new List<SyncRowValidationResult>();
+
+            foreach (var row in rows)
+            {
+                var result = await validator.ValidateRowAsync(row);
+
+                if (result.IsValid)
+                {
+                    var misValid = await misService.ValidateMisId(row.MisId);
+
+                    if (!misValid)
+                    {
+                        result.Errors.Add("MIS ID not found");
+                        result.IsValid = false;
+                    }
+                }
+
+                validationResults.Add(result);
+            }
+
+            var validationToken = Guid.NewGuid().ToString();
+
+            await cache.StoreValidationAsync(validationToken, validationResults);
+
+            return new ImportKaryakarResponse
+            {
+                IsAsync = false,
+                Validation = new ValidationSummaryDto
+                {
+                    ValidationToken = validationToken,
+                    TotalRecords = validationResults.Count,
+                    ValidRecords = validationResults.Count(x => x.IsValid),
+                    InvalidRecords = validationResults.Count(x => !x.IsValid),
+                    Results = validationResults
+                }
+            };
+        }
+
+        // ASYNC MODE
+        var job = await jobService.CreateJob(fileUrl, "103");
+
+        await producer.PublishValidateJobAsync(
+            job.ImportJobId,
+            "103",
+            "KARYAKAR",
+            fileUrl,
+            "SYSTEM"
+        );
+
+        return new ImportKaryakarResponse
+        {
+            IsAsync = true,
+            JobId = job.ImportJobId.ToString()
+        };
     }
 }

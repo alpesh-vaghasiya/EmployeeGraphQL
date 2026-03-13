@@ -103,6 +103,15 @@ public class CsvImportExecuteWorker : BackgroundService
             if (!long.TryParse(misId, out long pid))
                 continue;
 
+            long projId = long.Parse(projectId);
+
+            // 🔹 Duplicate check
+            bool exists = await db.ProjectKaryakars
+                .AnyAsync(x => x.ProjectId == projId && x.KaryakarPersonId == pid);
+
+            if (exists)
+                continue;
+
             karyakars.Add(new ProjectKaryakar
             {
                 ProjectKaryakarUucode = Guid.NewGuid(),
