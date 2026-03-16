@@ -25,6 +25,9 @@ namespace Domain.Entities
         [Column("status")]
         public string Status { get; set; } = "PENDING";
 
+        [Column("scheduled_time")]
+        public TimeSpan? ScheduledTime { get; set; }
+
         [Column("created_at")]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }

@@ -62,60 +62,18 @@ public class ProjectSchedulerWorker : BackgroundService
                     int templateId = int.Parse(
                         msg.Values.First(x => x.Name == "templateId").Value);
 
-                    using var scope = _scopeFactory.CreateScope();
-                    var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                    var type = msg.Values.First(x => x.Name == "type").Value.ToString();
 
-                    var schedule = await context.ProjectSchedules
-                        .FirstAsync(x => x.ProjectScheduleId == scheduleId);
-
-                    var template = await context.Templates.FirstAsync(x => x.TemplateId == templateId);
-                    if (template == null)
+                    switch (type)
                     {
-                        _logger.LogWarning("Template {TemplateId} not found", templateId);
-                        continue;
+                        case "PROJECT":
+                            await HandleProject(scheduleId, templateId);
+                            break;
+
+                        case "REMINDER":
+                            await HandleReminder(scheduleId);
+                            break;
                     }
-
-                    // JSONB → List<int>
-                    var locations = string.IsNullOrWhiteSpace(template.LocationScopeIds) ? new List<int>() : JsonSerializer.Deserialize<List<int>>(template.LocationScopeIds) ?? new List<int>();
-
-                    var startDate = DateTime.SpecifyKind(template.StartDate!.Value.ToDateTime(TimeOnly.MinValue), DateTimeKind.Utc);
-
-                    var existingProjects = await context.Projects.Where(p => p.TemplateId == template.TemplateId && p.ProjectStartDate == startDate)
-                        .Select(p => p.LocationId)
-                        .ToListAsync();
-
-                    var endDate = DateTime.SpecifyKind(template.EndDate!.Value.ToDateTime(TimeOnly.MinValue), DateTimeKind.Utc);
-
-                    var existingSet = existingProjects.ToHashSet();
-
-                    var projectList = new List<Project>();
-
-                    foreach (var locationId in locations)
-                    {
-                        var loc = locationId.ToString();
-
-                        if (existingSet.Contains(loc))
-                            continue;
-
-                        projectList.Add(new Project
-                        {
-                            ProjectUucode = Guid.NewGuid(),
-                            TemplateId = template.TemplateId,
-                            Title = template.Title,
-                            Description = template.Description,
-                            Status = "CREATED",
-                            LocationId = loc,
-                            ProjectStartDate = startDate,
-                            ProjectEndDate = endDate,
-                            CreatedAt = DateTime.UtcNow
-                        });
-                    }
-
-                    context.Projects.AddRange(projectList);
-
-                    schedule.Status = "COMPLETED";
-
-                    await context.SaveChangesAsync();
 
                     await db.StreamAcknowledgeAsync(stream, group, msg.Id);
                 }
@@ -125,5 +83,88 @@ public class ProjectSchedulerWorker : BackgroundService
                 }
             }
         }
+    }
+
+    private async Task HandleProject(int scheduleId, int templateId)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+        var schedule = await context.ProjectSchedules
+            .FirstAsync(x => x.ProjectScheduleId == scheduleId);
+
+        var template = await context.Templates
+            .FirstAsync(x => x.TemplateId == templateId);
+
+        var locations = string.IsNullOrWhiteSpace(template.LocationScopeIds)
+            ? new List<int>()
+            : JsonSerializer.Deserialize<List<int>>(template.LocationScopeIds) ?? new List<int>();
+
+        var startDate = DateTime.SpecifyKind(
+            template.StartDate!.Value.ToDateTime(TimeOnly.MinValue),
+            DateTimeKind.Utc);
+
+        var endDate = DateTime.SpecifyKind(
+            template.EndDate!.Value.ToDateTime(TimeOnly.MinValue),
+            DateTimeKind.Utc);
+
+        var existingProjects = await context.Projects
+            .Where(p => p.TemplateId == template.TemplateId && p.ProjectStartDate == startDate)
+            .Select(p => p.LocationId)
+            .ToListAsync();
+
+        var existingSet = existingProjects.ToHashSet();
+
+        var projectList = new List<Project>();
+
+        foreach (var locationId in locations)
+        {
+            var loc = locationId.ToString();
+
+            if (existingSet.Contains(loc))
+                continue;
+
+            projectList.Add(new Project
+            {
+                ProjectUucode = Guid.NewGuid(),
+                TemplateId = template.TemplateId,
+                Title = template.Title,
+                Description = template.Description,
+                Status = "CREATED",
+                LocationId = loc,
+                ProjectStartDate = startDate,
+                ProjectEndDate = endDate,
+                CreatedAt = DateTime.UtcNow
+            });
+        }
+
+        context.Projects.AddRange(projectList);
+
+        schedule.Status = "COMPLETED";
+
+        await context.SaveChangesAsync();
+    }
+
+    private async Task HandleReminder(int scheduleId)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+        var schedule = await context.ProjectSchedules
+            .FirstAsync(x => x.ProjectScheduleId == scheduleId);
+
+        var project = await context.Projects
+            .Include(x => x.Template)
+            .FirstOrDefaultAsync(x => x.ProjectId == schedule.ProjectId);
+
+        if (project == null)
+            return;
+
+        // 🔔 Notification API call
+        Console.WriteLine($"Reminder sent for project {project.ProjectId}");
+
+        schedule.Status = "COMPLETED";
+
+        await context.SaveChangesAsync();
     }
 }

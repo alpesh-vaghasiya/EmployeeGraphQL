@@ -19,10 +19,20 @@ public class ProjectScheduleJob
     {
         var db = _redis.GetDatabase();
 
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+       var now = DateTime.Now;
+
+        var today = DateOnly.FromDateTime(now);
+
+        var currentTime = now.TimeOfDay;
 
         var schedules = await _context.ProjectSchedules
-            .Where(x => x.ScheduledDate == today && x.Status == "PENDING" && x.ScheduleType == "PROJECT")
+            .Where(x =>
+                x.ScheduledDate == today &&
+                x.Status == "PENDING" &&
+                (
+                    x.ScheduleType == "PROJECT" ||
+                    (x.ScheduleType == "REMINDER" && x.ScheduledTime <= currentTime)
+                ))
             .ToListAsync();
 
         foreach (var schedule in schedules)
@@ -31,8 +41,10 @@ public class ProjectScheduleJob
                 "project:scheduler:jobs",
                 new NameValueEntry[]
                 {
-                    new("scheduleId", schedule.ProjectScheduleId),
-                    new("templateId", schedule.TemplateId)
+                new("scheduleId", schedule.ProjectScheduleId),
+                new("templateId", schedule.TemplateId),
+                new("projectId", schedule.ProjectId ?? 0),
+                new("type", schedule.ScheduleType)
                 });
         }
     }

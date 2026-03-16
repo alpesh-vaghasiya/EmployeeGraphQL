@@ -176,6 +176,18 @@ public class ProjectService : IProjectService
         // generate reminder schedules
         var reminderDates = _reminderService.GenerateDates(project);
 
+        var config = string.IsNullOrEmpty(project.ReminderFrequencyConfig) ? null : JsonSerializer.Deserialize<ReminderConfigInput>(project.ReminderFrequencyConfig!);
+
+        TimeSpan? time = null;
+
+        if (!string.IsNullOrEmpty(project.ReminderFrequencyConfig))
+        {
+            if (!string.IsNullOrEmpty(config?.Time))
+            {
+                time = TimeSpan.Parse(config.Time);
+            }
+        }
+
         foreach (var date in reminderDates)
         {
             _db.ProjectSchedules.Add(new ProjectSchedule
@@ -185,6 +197,7 @@ public class ProjectService : IProjectService
                 ScheduleType = "REMINDER",
                 ScheduledDate = DateOnly.FromDateTime(date),
                 Status = "PENDING",
+                ScheduledTime = time,
                 CreatedAt = DateTime.UtcNow
             });
         }
