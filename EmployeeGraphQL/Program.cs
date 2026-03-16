@@ -172,7 +172,21 @@ builder.Services.AddHangfire(config =>
 
 builder.Services.AddHangfireServer();
 
+// -----------------------------------------
+// Swagger
+// -----------------------------------------
+builder.Services.AddControllers();
+
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
 var app = builder.Build();
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 
 //Hangfire
 // 1️⃣ Initialize Hangfire JobStorage (MUST be before AddOrUpdate)
@@ -201,10 +215,13 @@ RecurringJob.AddOrUpdate<ProjectScheduleJob>(
 
 
 app.UseRouting();
+app.UseMiddleware<AuthMiddleware>();
 app.UseRateLimiter();
 app.UseMiddleware<GlobalExceptionMiddleware>();
 app.UseMiddleware<GraphQLExceptionStatusCodeMiddleware>();
 app.UseAuthorization();
+
+app.MapControllers(); // 👈 REST API
 
 //header
 app.Use(async (context, next) =>
