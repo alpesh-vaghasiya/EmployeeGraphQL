@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-
 namespace Application.Services
 {
     public class FrequencyService : IFrequencyService

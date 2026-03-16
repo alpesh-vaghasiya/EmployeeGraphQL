@@ -78,6 +78,7 @@ builder.Services.AddSingleton<RedisCacheService>();
 builder.Services.AddHostedService<DepartmentImportWorker>();
 builder.Services.AddHostedService<CsvImportValidationWorker>();
 builder.Services.AddHostedService<CsvImportExecuteWorker>();
+builder.Services.AddHostedService<ProjectSchedulerWorker>();
 
 //Import Services (MUST ADD)
 builder.Services.AddScoped<ImportJobService>();
@@ -90,6 +91,7 @@ builder.Services.AddScoped<IGraphQLPermissionProvider, GraphQLPermissionProvider
 builder.Services.Configure<MisModel>(builder.Configuration.GetSection("MisApi"));
 builder.Services.Configure<ASMModel>(builder.Configuration.GetSection("ASMService"));
 builder.Services.Configure<HangfireDepartmentImportSettings>(builder.Configuration.GetSection("HangfireJobs:DepartmentImport"));
+builder.Services.Configure<HangfireProjectImportSettings>(builder.Configuration.GetSection("HangfireJobs:ProjectImport"));
 builder.Services.Configure<SsoModel>(builder.Configuration.GetSection("SsoService"));
 builder.Services.Configure<RedisSettings>(builder.Configuration.GetSection("Redis"));
 builder.Services.AddScoped<IMisApiService, MisApiService>();
@@ -100,6 +102,7 @@ builder.Services.AddScoped<IFrequencyService, FrequencyService>();
 builder.Services.AddScoped<CsvParserService>();
 builder.Services.AddScoped<SyncKaryakarValidationService>();
 builder.Services.AddScoped<KaryakarImportService>();
+builder.Services.AddScoped<ProjectScheduleJob>();
 
 
 // -----------------------------------------
@@ -182,6 +185,17 @@ RecurringJob.AddOrUpdate<DepartmentScheduledJobService>(
     depJobConfig.JobName,
     job => job.PublishDepartmentJob(),
     depJobConfig.Cron
+);
+
+// 2️⃣ Load settings from appsettings.json
+var projectJobConfig = app.Services.GetRequiredService<IOptions<HangfireProjectImportSettings>>().Value;
+
+// 3️⃣ Register recurring job (NOW storage is initialized)
+RecurringJob.AddOrUpdate<ProjectScheduleJob>(
+    projectJobConfig.JobName,
+    job => job.Execute(),
+    projectJobConfig.Cron,
+    TimeZoneInfo.Local
 );
 
 
