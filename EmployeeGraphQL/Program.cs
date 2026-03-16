@@ -103,6 +103,7 @@ builder.Services.AddScoped<CsvParserService>();
 builder.Services.AddScoped<SyncKaryakarValidationService>();
 builder.Services.AddScoped<KaryakarImportService>();
 builder.Services.AddScoped<ProjectScheduleJob>();
+builder.Services.AddScoped<ReminderService>();
 
 
 // -----------------------------------------

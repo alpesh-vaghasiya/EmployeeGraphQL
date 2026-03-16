@@ -7,4 +7,5 @@ public interface IProjectService
     Task<Project> CreateProject(ProjectInput input, CancellationToken cancellationToken);
     Task<Project> UpdateProject(int id, ProjectInput input, CancellationToken cancellationToken);
     Task<bool> DeleteProject(int id, CancellationToken cancellationToken);
+    Task<Project> PublishProject(int id, CancellationToken cancellationToken);
 }

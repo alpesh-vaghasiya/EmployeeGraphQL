@@ -23,9 +23,10 @@ public class TemplateInput
     // public string? ProjectRepeateFrequencyConfig { get; set; }
 
     public ProjectFrequencyInput? ProjectRepeateFrequencyConfig { get; set; }
+    public ReminderConfigInput? ReminderFrequencyConfig { get; set; }
     public int? ReminderValue { get; set; }
 
-    public string? ReminderFrequencyConfig { get; set; }
+    // public string? ReminderFrequencyConfig { get; set; }
 
     public bool? CustomReminder { get; set; }
 
@@ -62,4 +63,13 @@ public class ProjectFrequencyInput
     public int MinDurationDays { get; set; }
 
     public int MaxDurationDays { get; set; }
+}
+
+public class ReminderConfigInput
+{
+    public string Frequency { get; set; } = null!; // ONCE / REPEAT
+    public int? RepeatEvery { get; set; }
+    public string? RepeatUnit { get; set; } // DAYS
+    public string Time { get; set; } = "10:00";
+    public string? Till { get; set; } // PROJECT_END
 }

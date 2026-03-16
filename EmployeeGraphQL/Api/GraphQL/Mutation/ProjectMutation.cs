@@ -30,5 +30,12 @@ namespace Api.GraphQL
         {
             return await service.DeleteProject(id, cancellationToken);
         }
+        public async Task<Project> PublishProject(
+        int id,
+        [Service] IProjectService service,
+        CancellationToken cancellationToken)
+        {
+            return await service.PublishProject(id, cancellationToken);
+        }
     }
 }

@@ -1,5 +1,7 @@
+using System.Text.Json;
 using Api.GraphQL.Inputs;
 using Dapper;
+using Domain.Entities;
 using EmployeeGraphQL.Domain.Entities;
 using EmployeeGraphQL.Infrastructure.Data;
 using FluentValidation;
@@ -12,13 +14,15 @@ public class ProjectService : IProjectService
     private readonly IValidator<ProjectInput> _validator;
     private readonly IConfiguration _config;
     private readonly string _connectionString;
+    private readonly ReminderService _reminderService;
 
-    public ProjectService(AppDbContext db, IValidator<ProjectInput> validator, IConfiguration config)
+    public ProjectService(AppDbContext db, IValidator<ProjectInput> validator, IConfiguration config, ReminderService reminderService)
     {
         _db = db;
         _validator = validator;
         _config = config;
         _connectionString = config.GetConnectionString("DefaultConnection");
+        _reminderService = reminderService;
     }
 
     public async Task<PagedResult<ProjectResponse>> Projects(long departmentId, QueryOptions options)
@@ -83,6 +87,12 @@ public class ProjectService : IProjectService
         var startDate = input.ProjectStartDate ?? template.StartDate?.ToDateTime(TimeOnly.MinValue) ?? DateTime.UtcNow;
         var endDate = input.ProjectEndDate ?? template.EndDate?.ToDateTime(TimeOnly.MinValue) ?? DateTime.UtcNow;
 
+        var reminderFrequencyConfig = template.ReminderFrequencyConfig;
+
+        // if (template.CustomReminder == true)
+        // {
+        //     reminderFrequencyConfig = input.ReminderFrequencyConfig != null ? JsonSerializer.Serialize(input.ReminderFrequencyConfig) : null;
+        // }
         var project = new Project
         {
             ProjectUucode = Guid.NewGuid(),
@@ -92,6 +102,8 @@ public class ProjectService : IProjectService
             ProjectStartDate = startDate,
             ProjectEndDate = endDate,
             Description = input.Description,
+            ReminderFrequency = input.ReminderFrequency,
+            ReminderFrequencyConfig = reminderFrequencyConfig,
         };
 
         _db.Projects.Add(project);
@@ -127,7 +139,7 @@ public class ProjectService : IProjectService
         project.ProjectStartDate = input.ProjectStartDate ?? project.ProjectStartDate;
         project.ProjectEndDate = input.ProjectEndDate ?? project.ProjectEndDate;
         project.ReminderFrequency = input.ReminderFrequency;
-        project.ReminderFrequencyConfig = input.ReminderFrequencyConfig;
+        project.ReminderFrequencyConfig = input.ReminderFrequencyConfig != null ? JsonSerializer.Serialize(input.ReminderFrequencyConfig) : project.ReminderFrequencyConfig;
         project.UpdatedAt = DateTime.UtcNow;
 
         await _db.SaveChangesAsync(cancellationToken);
@@ -147,5 +159,38 @@ public class ProjectService : IProjectService
         await _db.SaveChangesAsync(cancellationToken);
 
         return true;
+    }
+    public async Task<Project> PublishProject(int id, CancellationToken cancellationToken)
+    {
+        var project = await _db.Projects
+            .FirstOrDefaultAsync(x => x.ProjectId == id, cancellationToken);
+
+        if (project == null)
+            throw new GraphQLException("Project not found");
+
+        if (project.Status == "PUBLISH")
+            throw new GraphQLException("Project already published");
+
+        project.Status = "PUBLISH";
+
+        // generate reminder schedules
+        var reminderDates = _reminderService.GenerateDates(project);
+
+        foreach (var date in reminderDates)
+        {
+            _db.ProjectSchedules.Add(new ProjectSchedule
+            {
+                TemplateId = (int)project.TemplateId,
+                ProjectId = (int)project.ProjectId,
+                ScheduleType = "REMINDER",
+                ScheduledDate = DateOnly.FromDateTime(date),
+                Status = "PENDING",
+                CreatedAt = DateTime.UtcNow
+            });
+        }
+
+        await _db.SaveChangesAsync(cancellationToken);
+
+        return project;
     }
 }

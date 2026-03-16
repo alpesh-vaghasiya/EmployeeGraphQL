@@ -22,7 +22,7 @@ public class ProjectScheduleJob
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
 
         var schedules = await _context.ProjectSchedules
-            .Where(x => x.ScheduledDate == today && x.Status == "PENDING")
+            .Where(x => x.ScheduledDate == today && x.Status == "PENDING" && x.ScheduleType == "PROJECT")
             .ToListAsync();
 
         foreach (var schedule in schedules)

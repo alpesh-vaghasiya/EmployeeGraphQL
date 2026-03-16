@@ -48,7 +48,7 @@ namespace Api.GraphQL
         ? JsonSerializer.Serialize(input.ProjectRepeateFrequencyConfig)
         : null;
             entity.ReminderValue = input.ReminderValue;
-            entity.ReminderFrequencyConfig = input.ReminderFrequencyConfig;
+            entity.ReminderFrequencyConfig = input.ReminderFrequencyConfig != null ? JsonSerializer.Serialize(input.ReminderFrequencyConfig) : null;
             entity.CustomReminder = input.CustomReminder;
             entity.CustomDocument = input.CustomDocument;
 
@@ -340,6 +340,7 @@ namespace Api.GraphQL
                     TemplateId = (int)template.TemplateId,
                     ScheduledDate = date,
                     Status = "PENDING",
+                    ScheduleType = "PROJECT",
                     CreatedAt = DateTime.UtcNow
                 });
             }

@@ -13,8 +13,14 @@ namespace Domain.Entities
         [Column("template_id")]
         public int TemplateId { get; set; }
 
+        [Column("project_id")]
+        public long? ProjectId { get; set; }   // FIX HERE
+
         [Column("scheduled_date")]
         public DateOnly ScheduledDate { get; set; }
+
+        [Column("schedule_type")]
+        public string ScheduleType { get; set; } = "PROJECT";
 
         [Column("status")]
         public string Status { get; set; } = "PENDING";

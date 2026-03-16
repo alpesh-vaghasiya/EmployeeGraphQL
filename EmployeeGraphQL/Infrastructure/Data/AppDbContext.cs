@@ -627,6 +627,11 @@ public partial class AppDbContext : DbContext
 
                entity.Property(e => e.CreatedAt)
                    .HasColumnName("created_at");
+
+               entity.HasOne<Project>()
+       .WithMany()
+       .HasForeignKey(e => e.ProjectId)
+       .OnDelete(DeleteBehavior.Cascade);
            });
 
     }
