@@ -90,24 +90,24 @@ public class KaryakarImportController : ControllerBase
             jobId = job.ImportJobId
         });
     }
-    // // STEP 2 : IMPORT FROM TOKEN
-    // [HttpPost("import")]
-    // public async Task<IActionResult> ImportFromToken(
-    //     string validationToken,
-    //     long projectId)
-    // {
-    //     var records = await _cache.GetValidationAsync(validationToken);
+    // STEP 2 : IMPORT FROM TOKEN
+    [HttpPost("import")]
+    public async Task<IActionResult> ImportFromToken(
+        string validationToken,
+        long projectId)
+    {
+        var records = await _cache.GetValidationAsync(validationToken);
 
-    //     if (records == null || !records.Any())
-    //         return BadRequest("Validation data not found");
+        if (records == null || !records.Any())
+            return BadRequest("Validation data not found");
 
-    //     var validRecords = records.Where(x => x.IsValid).ToList();
+        var validRecords = records.Where(x => x.IsValid).ToList();
 
-    //     if (!validRecords.Any())
-    //         return BadRequest("No valid records");
+        if (!validRecords.Any())
+            return BadRequest("No valid records");
 
-    //     await _importService.InsertKaryakarAsync(projectId, validRecords);
+        await _importService.InsertKaryakarAsync(projectId, validRecords);
 
-    //     return Ok($"IMPORT COMPLETED. Inserted: {validRecords.Count}");
-    // }
+        return Ok($"IMPORT COMPLETED. Inserted: {validRecords.Count}");
+    }
 }
