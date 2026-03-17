@@ -3,8 +3,10 @@ using Api.GraphQL.Auth;
 using Api.GraphQL.Inputs;
 using Application.Services;
 using EmployeeGraphQL.Application.Services;
+using EmployeeGraphQL.Application.Services.SFS;
 using EmployeeGraphQL.Application.Settings;
 using EmployeeGraphQL.GraphQL.Errors;
+using EmployeeGraphQL.GraphQL.Inputs;
 using EmployeeGraphQL.Infrastructure.Data;
 using EmployeeGraphQL.Infrastructure.Middleware;
 using FluentValidation;
@@ -90,6 +92,7 @@ builder.Services.AddScoped<DepartmentScheduledJobService>();
 builder.Services.AddScoped<IGraphQLPermissionProvider, GraphQLPermissionProvider>();
 builder.Services.Configure<MisModel>(builder.Configuration.GetSection("MisApi"));
 builder.Services.Configure<ASMModel>(builder.Configuration.GetSection("ASMService"));
+builder.Services.Configure<SFSServiceModel>(builder.Configuration.GetSection("SFSService"));
 builder.Services.Configure<HangfireDepartmentImportSettings>(builder.Configuration.GetSection("HangfireJobs:DepartmentImport"));
 builder.Services.Configure<HangfireProjectImportSettings>(builder.Configuration.GetSection("HangfireJobs:ProjectImport"));
 builder.Services.Configure<SsoModel>(builder.Configuration.GetSection("SsoService"));
@@ -99,6 +102,8 @@ builder.Services.AddScoped<IAsmApiService, AsmApiService>();
 builder.Services.AddHttpClient<ISsoService, SsoService>();
 builder.Services.AddScoped<IProjectService, ProjectService>();
 builder.Services.AddScoped<IFrequencyService, FrequencyService>();
+builder.Services.AddScoped<IFileService, FileService>();
+builder.Services.AddScoped<ISFSService, SFSService>();
 builder.Services.AddScoped<CsvParserService>();
 builder.Services.AddScoped<SyncKaryakarValidationService>();
 builder.Services.AddScoped<KaryakarImportService>();
@@ -133,6 +138,8 @@ builder.Services
     .AddTypeExtension<DepartmentMutation>()
     .AddTypeExtension<ProjectMutation>()
     .AddTypeExtension<ProjectQuery>()
+    .AddTypeExtension<FileQuery>()
+    .AddTypeExtension<FileMutation>()
     .AddUploadType()
     .AddProjections()
     .AddFiltering()

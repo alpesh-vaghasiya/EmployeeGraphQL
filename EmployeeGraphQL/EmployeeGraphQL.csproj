@@ -22,6 +22,7 @@
     <PackageReference Include="HotChocolate.Data" Version="15.1.12" />
     <PackageReference Include="HotChocolate.Data.EntityFramework" Version="13.7.0" />
     <PackageReference Include="HotChocolate.Types" Version="15.1.12" />
+    <PackageReference Include="HttpMultipartParser" Version="10.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.0">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
