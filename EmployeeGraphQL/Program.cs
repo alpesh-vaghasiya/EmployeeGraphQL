@@ -104,6 +104,7 @@ builder.Services.AddScoped<IProjectService, ProjectService>();
 builder.Services.AddScoped<IFrequencyService, FrequencyService>();
 builder.Services.AddScoped<IFileService, FileService>();
 builder.Services.AddScoped<ISFSService, SFSService>();
+builder.Services.AddScoped<IGssService, GssService>();
 builder.Services.AddScoped<CsvParserService>();
 builder.Services.AddScoped<SyncKaryakarValidationService>();
 builder.Services.AddScoped<KaryakarImportService>();
@@ -140,6 +141,7 @@ builder.Services
     .AddTypeExtension<ProjectQuery>()
     .AddTypeExtension<FileQuery>()
     .AddTypeExtension<MISQuery>()
+    .AddTypeExtension<GSSQuery>()
     .AddTypeExtension<FileMutation>()
     .AddUploadType()
     .AddProjections()
