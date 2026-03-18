@@ -20,14 +20,14 @@ public class MisApiService : IMisApiService
         _logger = logger;
     }
 
-    public async Task<T> GetAsync<T>(string endpoint, Dictionary<string, object> queryParams = null)
+    public async Task<T?> GetAsync<T>(string endpoint, Dictionary<string, object> queryParams = null)
     {
         var url = _mis.Url + endpoint;
 
         if (queryParams?.Count > 0)
         {
             var qp = string.Join("&", queryParams.Select(x =>
-                $"{x.Key}={x.Value}"
+            $"{Uri.EscapeDataString(x.Key)}={Uri.EscapeDataString(x.Value?.ToString())}"
             ));
             url += "?" + qp;
         }
@@ -48,8 +48,9 @@ public class MisApiService : IMisApiService
                 url, watch.ElapsedMilliseconds
             );
             var content = await response.Content.ReadAsStringAsync();
+            _logger.LogInformation("Response: {content}", content);
 
-            return JsonConvert.DeserializeObject<T>(content);
+            return MisResponseHelper.Normalize<T>(content);
         }
 
         throw new Exception($"MIS error: {response.StatusCode} - {await response.Content.ReadAsStringAsync()}");

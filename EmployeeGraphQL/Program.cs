@@ -139,6 +139,7 @@ builder.Services
     .AddTypeExtension<ProjectMutation>()
     .AddTypeExtension<ProjectQuery>()
     .AddTypeExtension<FileQuery>()
+    .AddTypeExtension<MISQuery>()
     .AddTypeExtension<FileMutation>()
     .AddUploadType()
     .AddProjections()

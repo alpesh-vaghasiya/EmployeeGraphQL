@@ -31,3 +31,28 @@ public class RolePositionModel
     public int RoleId { get; set; }
     public int PositionId { get; set; }
 }
+public class DeptMandal
+{
+    public int DeptId { get; set; }
+    public string? DeptName { get; set; }
+    public int MandalId { get; set; }
+    public string? MandalName { get; set; }
+    public string? Wing { get; set; }
+    public int DivisionId { get; set; }
+}
+public class DeptSCategory
+{
+    public int DeptId { get; set; }
+    public string? DeptName { get; set; }
+
+    public int SCatId { get; set; }
+    public string? SCategoryName { get; set; }
+    public string? SCatCode { get; set; }
+
+    public string? Wing { get; set; }
+
+    public int MandalId { get; set; }   // ⚠️ API gives string → we convert to int
+    public string? MandalName { get; set; }
+
+    public int DisplayOrder { get; set; }
+}
