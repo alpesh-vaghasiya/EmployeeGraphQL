@@ -1,3 +1,5 @@
+using EmployeeGraphQL.Domain.Entities;
+
 public class UserModuleAccessResponse
 {
     public int UserId { get; set; }
@@ -25,6 +27,7 @@ public class PositionViewModel
     public string? PersonMName { get; set; }
     public string? PersonLName { get; set; }
     public string? PersonOName { get; set; }
+    public List<PositionDepartment> Dept { get; set; }
 }
 public class RolePositionModel
 {
@@ -130,4 +133,32 @@ public class EntityInfo
     public string hierarchyId { get; set; }
     public string hierarchyName { get; set; }
     public int DivId { get; set; }
+}
+public class PositionDepartment
+{
+    public int DeptId { get; set; }
+    public string? Name { get; set; }
+    public string? Code { get; set; }
+    public string? Wing { get; set; }
+    public int? PersonId { get; set; }
+    public int? PositionId { get; set; }
+
+}
+public class RoleResponse
+{
+    public int RoleId { get; set; }
+    public Guid RoleUUID { get; set; }
+    public string Name { get; set; }
+    public string ShortName { get; set; }
+    public int DivId { get; set; }
+    public int GeoLevelId { get; set; }
+
+    public List<DepartmentDto> Dept { get; set; }
+}
+public class DepartmentDto
+{
+    public int DeptId { get; set; }
+    public string Name { get; set; }
+    public string Code { get; set; }
+    public string Wing { get; set; }
 }

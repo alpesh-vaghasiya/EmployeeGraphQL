@@ -98,4 +98,27 @@ public class MISQuery
         return await misApi.GetAsync<PersonProfile>(endpoint, queryParams);
     }
 
+    public async Task<IEnumerable<PositionViewModel>> GetPersonPosition(int personId, [Service] IMisApiService misApi)
+    {
+        var endpoint = "Person/Position";
+
+        var queryParams = new Dictionary<string, object>
+    {
+        { "personId", personId }
+    };
+
+        return await misApi.GetAsync<IEnumerable<PositionViewModel>>(endpoint, queryParams);
+    }
+
+    public async Task<IEnumerable<RoleResponse>> GetRolesByDept(int deptId, [Service] IMisApiService misApi)
+    {
+        var endpoint = "Role";
+
+        var queryParams = new Dictionary<string, object>
+    {
+        { "deptId", deptId }
+    };
+
+        return await misApi.GetAsync<IEnumerable<RoleResponse>>(endpoint, queryParams);
+    }
 }
