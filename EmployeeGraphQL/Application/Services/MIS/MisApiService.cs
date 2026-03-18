@@ -1,8 +1,5 @@
 using System.Diagnostics;
-using System.Net.Http.Json;
 using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
 
 public class MisApiService : IMisApiService
 {

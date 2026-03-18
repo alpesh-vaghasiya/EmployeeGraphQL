@@ -77,4 +77,25 @@ public class MISQuery
 
         return await misApi.GetAsync<IEnumerable<DeptSCategory>>(endpoint, queryParams);
     }
+
+    public async Task<PersonProfile> GetPersonProfile(
+    PersonProfileInput input,
+    [Service] IMisApiService misApi)
+    {
+        var endpoint = "Person/Profile";
+
+        var queryParams = new Dictionary<string, object>
+    {
+        { "personId", input.PersonId },
+        { "includeEmailInfo", input.IncludeEmailInfo },
+        { "includeEntityInfo", input.IncludeEntityInfo },
+        { "includeParentEntityInfo", input.IncludeParentEntityInfo },
+        { "includeRelativeInfo", input.IncludeRelativeInfo },
+        { "includeAddressInfo", input.IncludeAddressInfo },
+        { "includePhoneInfo", input.IncludePhoneInfo }
+    };
+
+        return await misApi.GetAsync<PersonProfile>(endpoint, queryParams);
+    }
+
 }

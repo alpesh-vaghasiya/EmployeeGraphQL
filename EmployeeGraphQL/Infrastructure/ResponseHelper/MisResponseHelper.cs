@@ -9,19 +9,31 @@ public static class MisResponseHelper
 
         var token = JToken.Parse(content);
 
-        // ✅ Case 1: { succeeded, data }
+        // ✅ Case 1: Wrapped response
         if (token.Type == JTokenType.Object && token["data"] != null)
         {
-            return token["data"].ToObject<T>();
+            var dataToken = token["data"];
+
+            // 🔥 If data is ARRAY
+            if (dataToken.Type == JTokenType.Array)
+            {
+                // If T is collection → direct
+                if (typeof(T).IsGenericType &&
+                    typeof(T).GetGenericTypeDefinition() == typeof(IEnumerable<>))
+                {
+                    return dataToken.ToObject<T>();
+                }
+
+                // If T is single → take first
+                var first = dataToken.FirstOrDefault();
+                return first != null ? first.ToObject<T>() : default;
+            }
+
+            // 🔥 If data is OBJECT
+            return dataToken.ToObject<T>();
         }
 
-        // ✅ Case 2: { result: ... }
-        if (token.Type == JTokenType.Object && token["result"] != null)
-        {
-            return token["result"].ToObject<T>();
-        }
-
-        // ✅ Case 3: direct array or object
+        // ✅ Case 2: Direct response
         return token.ToObject<T>();
     }
 }

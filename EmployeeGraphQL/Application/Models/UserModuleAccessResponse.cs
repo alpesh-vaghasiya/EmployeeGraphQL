@@ -56,3 +56,78 @@ public class DeptSCategory
 
     public int DisplayOrder { get; set; }
 }
+public class PersonProfile
+{
+    public int personId { get; set; }
+    public string fName { get; set; }
+    public string mName { get; set; }
+    public string lName { get; set; }
+    public string bapsid { get; set; }
+    public string gender { get; set; }
+    public int mandalId { get; set; }
+    public string hierarchyName { get; set; }
+    public int familyId { get; set; }
+    public bool isPrimary { get; set; }
+    public int? sCatId { get; set; }
+    public string? statusType { get; set; }
+    public int? ageGroupYearE { get; set; }
+    public int? ageGroupYearS { get; set; }
+    public int? entityId { get; set; }
+    public List<Phone> phone { get; set; }
+    public List<Email> email { get; set; }
+    public List<Address> address { get; set; }
+    public RelativeInfo relativeInfo { get; set; }
+    public EntityInfo entityInfo { get; set; }
+
+    public string? _gender => gender?.ToLower() == "m" ? "Male" : gender?.ToLower() == "f" ? "Female" : "Other";
+    public string? _phoneCell => phone?.FirstOrDefault(x => x.type?.ToLower() == "c")?.phone;
+    public string? _isdCode => phone?.FirstOrDefault(x => x.type?.ToLower() == "c")?.isdCode;
+    public string? _email => email?.FirstOrDefault(x => x.type?.ToLower() == "p")?.email;
+    public string? _address => (address?.FirstOrDefault(x => x.type?.ToLower() == "h")?.addrLn1 + "") + (address?.FirstOrDefault(x => x.type?.ToLower() == "h")?.addrLn2 + "");
+    public string? _city => address?.FirstOrDefault(x => x.type?.ToLower() == "h")?.cityTown;
+    public string? _state => address?.FirstOrDefault(x => x.type?.ToLower() == "h")?.stateProvince;
+    public string? _countryCode => address?.FirstOrDefault(x => x.type?.ToLower() == "h")?.countryCode;
+    public string? _zipcode => address?.FirstOrDefault(x => x.type?.ToLower() == "h")?.postalCode;
+    public int? _relationId => relativeInfo?.rTypeId;
+    public string? _zone => entityInfo?.hierarchyName.Split("|")[hierarchyName.Split("|").Length - 1];
+    public string? _center => entityInfo?.hierarchyName.Split("|")[hierarchyName.Split("|").Length - 2];
+    public string? _region => entityInfo?.hierarchyName.Split("|")[hierarchyName.Split("|").Length - 3];
+    public int _zoneId => entityInfo?.geoLevel == 60 ? Convert.ToInt32(entityInfo?.hierarchyId.Split("|")[entityInfo.hierarchyId.Split("|").Length - 1]) : 0;
+    public int _centerId => entityInfo?.geoLevel == 60 ? Convert.ToInt32(entityInfo?.hierarchyId.Split("|")[entityInfo.hierarchyId.Split("|").Length - 2]) : entityInfo?.geoLevelId == 3 ? Convert.ToInt32(entityInfo?.hierarchyId.Split("|")[entityInfo.hierarchyId.Split("|").Length - 1]) : 0;
+    public int _regionId => entityInfo?.geoLevel == 60 ? Convert.ToInt32(entityInfo?.hierarchyId.Split("|")[entityInfo.hierarchyId.Split("|").Length - 3]) : entityInfo?.geoLevelId == 3 ? Convert.ToInt32(entityInfo?.hierarchyId.Split("|")[entityInfo.hierarchyId.Split("|").Length - 2]) : 0;
+    public int _divId => entityInfo != null ? entityInfo.DivId : 0;
+}
+public class Phone
+{
+    public string phone { get; set; }
+    public string type { get; set; }
+    public string? isdCode { get; set; }
+}
+public class Address
+{
+    public string type { get; set; }
+    public string addrLn1 { get; set; }
+    public object addrLn2 { get; set; }
+    public string cityTown { get; set; }
+    public string stateProvince { get; set; }
+    public string postalCode { get; set; }
+    public string countryCode { get; set; }
+}
+public class Email
+{
+    public string email { get; set; }
+    public string type { get; set; }
+}
+public class RelativeInfo
+{
+    public int rPersonId { get; set; }
+    public int rTypeId { get; set; }
+}
+public class EntityInfo
+{
+    public int geoLevelId { get; set; }
+    public int geoLevel { get; set; }
+    public string hierarchyId { get; set; }
+    public string hierarchyName { get; set; }
+    public int DivId { get; set; }
+}
