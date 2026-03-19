@@ -248,3 +248,5 @@ app.Use(async (context, next) =>
 app.MapGraphQL("/graphql").RequireRateLimiting("api");
 
 app.Run();
+
+public partial class Program { }
