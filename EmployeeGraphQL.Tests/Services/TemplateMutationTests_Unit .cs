@@ -11,6 +11,8 @@ using HotChocolate;
 
 public class TemplateMutationTests_Unit
 {
+
+  #region  template
   [Fact]
   public void MapInputToEntity_ValidInput_ShouldMapBasicFields()
   {
@@ -90,6 +92,75 @@ public class TemplateMutationTests_Unit
     Assert.Null(entity.EndDate);
   }
 
+  [Fact]
+  public async Task CreateTemplate_ValidInput_ShouldSaveAndReturnEntity()
+  {
+    // Arrange
+    var options = new DbContextOptionsBuilder<AppDbContext>()
+        .UseInMemoryDatabase(Guid.NewGuid().ToString())
+        .Options;
+
+    var db = new AppDbContext(options);
+
+    var validator = new Mock<IValidator<TemplateInput>>();
+    validator.Setup(v => v.ValidateAsync(It.IsAny<TemplateInput>(), It.IsAny<CancellationToken>()))
+    .ReturnsAsync(new FluentValidation.Results.ValidationResult(
+        new List<FluentValidation.Results.ValidationFailure>()
+    ));
+
+    var mutation = new TemplateMutation();
+
+    var input = new TemplateInput
+    {
+      Title = "Test Template",
+      ProjectTypeId = 1,
+      SamparkTypeId = 1,
+      AllowedDraftProject = "YES"
+    };
+
+    // Act
+    var result = await mutation.CreateTemplate(input, db, validator.Object, CancellationToken.None);
+
+    // Assert
+    Assert.NotNull(result);
+    Assert.Equal("Test Template", result.Title);
+
+    // DB check 🔥
+    var saved = db.Set<Template>().FirstOrDefault();
+    Assert.NotNull(saved);
+    Assert.Equal("Test Template", saved.Title);
+  }
+
+  [Fact]
+  public async Task CreateTemplate_InvalidInput_ShouldThrowException()
+  {
+    // Arrange
+    var options = new DbContextOptionsBuilder<AppDbContext>()
+        .UseInMemoryDatabase(Guid.NewGuid().ToString())
+        .Options;
+
+    var db = new AppDbContext(options);
+
+    var validator = new Mock<IValidator<TemplateInput>>();
+    validator.Setup(v => v.ValidateAsync(It.IsAny<TemplateInput>(), It.IsAny<CancellationToken>()))
+        .ReturnsAsync(new FluentValidation.Results.ValidationResult(
+            new List<FluentValidation.Results.ValidationFailure>
+            {
+                new FluentValidation.Results.ValidationFailure("Title", "Title required")
+            }
+        ));
+
+    var mutation = new TemplateMutation();
+
+    var input = new TemplateInput(); // invalid
+
+    // Act & Assert
+    await Assert.ThrowsAsync<GraphQLException>(() =>
+        mutation.CreateTemplate(input, db, validator.Object, CancellationToken.None));
+  }
+  #endregion
+
+  #region  ProjectFrequency
   //JSON Serialization Test
   [Fact]
   public void MapInputToEntity_ShouldSerializeProjectFrequencyConfig()
@@ -141,7 +212,9 @@ public class TemplateMutationTests_Unit
     // Assert
     Assert.Null(entity.ProjectRepeateFrequencyConfig);
   }
+  #endregion
 
+  #region  TargetConfigs
   // TargetConfigs → Add New (Positive Case)
 
   [Fact]
@@ -281,7 +354,9 @@ public class TemplateMutationTests_Unit
     Assert.Equal("ACTIVE", activeConfig.Status);
     Assert.Equal("INACTIVE", inactiveConfig.Status);
   }
+  #endregion
 
+  #region DepartmentConfigs
   //DepartmentConfigs → Add New (Positive)
   [Fact]
   public void MapInputToEntity_ShouldAddDepartmentConfigs()
@@ -422,7 +497,9 @@ public class TemplateMutationTests_Unit
     Assert.Equal("ACTIVE", active.Status);
     Assert.Equal("INACTIVE", inactive.Status);
   }
+  #endregion
 
+  #region TargetSurveys
   //TargetSurveys → Add New (Positive)
   [Fact]
   public void MapInputToEntity_ShouldAddTargetSurveys()
@@ -570,7 +647,9 @@ public class TemplateMutationTests_Unit
     Assert.Equal("ACTIVE", active.Status);
     Assert.Equal("INACTIVE", inactive.Status);
   }
+  #endregion
 
+  #region  Documents
   // Documents → Add New
   [Fact]
   public void MapInputToEntity_ShouldAddDocuments()
@@ -708,73 +787,8 @@ public class TemplateMutationTests_Unit
     Assert.Equal("ACTIVE", active.Status);
     Assert.Equal("INACTIVE", inactive.Status);
   }
+  #endregion
 
-  [Fact]
-  public async Task CreateTemplate_ValidInput_ShouldSaveAndReturnEntity()
-  {
-    // Arrange
-    var options = new DbContextOptionsBuilder<AppDbContext>()
-        .UseInMemoryDatabase(Guid.NewGuid().ToString())
-        .Options;
-
-    var db = new AppDbContext(options);
-
-    var validator = new Mock<IValidator<TemplateInput>>();
-    validator.Setup(v => v.ValidateAsync(It.IsAny<TemplateInput>(), It.IsAny<CancellationToken>()))
-    .ReturnsAsync(new FluentValidation.Results.ValidationResult(
-        new List<FluentValidation.Results.ValidationFailure>()
-    ));
-
-    var mutation = new TemplateMutation();
-
-    var input = new TemplateInput
-    {
-      Title = "Test Template",
-      ProjectTypeId = 1,
-      SamparkTypeId = 1,
-      AllowedDraftProject = "YES"
-    };
-
-    // Act
-    var result = await mutation.CreateTemplate(input, db, validator.Object, CancellationToken.None);
-
-    // Assert
-    Assert.NotNull(result);
-    Assert.Equal("Test Template", result.Title);
-
-    // DB check 🔥
-    var saved = db.Set<Template>().FirstOrDefault();
-    Assert.NotNull(saved);
-    Assert.Equal("Test Template", saved.Title);
-  }
-
-  [Fact]
-  public async Task CreateTemplate_InvalidInput_ShouldThrowException()
-  {
-    // Arrange
-    var options = new DbContextOptionsBuilder<AppDbContext>()
-        .UseInMemoryDatabase(Guid.NewGuid().ToString())
-        .Options;
-
-    var db = new AppDbContext(options);
-
-    var validator = new Mock<IValidator<TemplateInput>>();
-    validator.Setup(v => v.ValidateAsync(It.IsAny<TemplateInput>(), It.IsAny<CancellationToken>()))
-        .ReturnsAsync(new FluentValidation.Results.ValidationResult(
-            new List<FluentValidation.Results.ValidationFailure>
-            {
-                new FluentValidation.Results.ValidationFailure("Title", "Title required")
-            }
-        ));
-
-    var mutation = new TemplateMutation();
-
-    var input = new TemplateInput(); // invalid
-
-    // Act & Assert
-    await Assert.ThrowsAsync<GraphQLException>(() =>
-        mutation.CreateTemplate(input, db, validator.Object, CancellationToken.None));
-  }
 
   private Template InvokeMap(TemplateMutation mutation, TemplateInput input, Template? existing = null)
   {

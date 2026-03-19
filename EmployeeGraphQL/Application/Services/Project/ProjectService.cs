@@ -72,8 +72,9 @@ public class ProjectService : IProjectService
         }
 
         var name = input.Name.Trim();
+        var normalizedName = name.ToLowerInvariant();
 
-        if (await _db.Projects.AnyAsync(x => EF.Functions.ILike(x.Title, name), cancellationToken))
+        if (await _db.Projects.AnyAsync(x => x.Title.ToLower() == normalizedName, cancellationToken))
         {
             throw new GraphQLException("Project title already exists.");
         }
@@ -83,6 +84,36 @@ public class ProjectService : IProjectService
 
         if (template == null)
             throw new GraphQLException("Template not found");
+
+        // Convert template dates to DateTime
+        var templateStart = template.StartDate?.ToDateTime(TimeOnly.MinValue);
+        var templateEnd = template.EndDate?.ToDateTime(TimeOnly.MinValue);
+
+        // Validate only if input dates are provided
+        if (input.ProjectStartDate.HasValue && templateStart.HasValue)
+        {
+            if (input.ProjectStartDate < templateStart)
+            {
+                throw new GraphQLException("Project start date cannot be before template start date.");
+            }
+        }
+
+        if (input.ProjectEndDate.HasValue && templateEnd.HasValue)
+        {
+            if (input.ProjectEndDate > templateEnd)
+            {
+                throw new GraphQLException("Project end date cannot be after template end date.");
+            }
+        }
+
+        // Optional: start < end validation
+        if (input.ProjectStartDate.HasValue && input.ProjectEndDate.HasValue)
+        {
+            if (input.ProjectStartDate > input.ProjectEndDate)
+            {
+                throw new GraphQLException("Project start date cannot be greater than end date.");
+            }
+        }
 
         var startDate = input.ProjectStartDate ?? template.StartDate?.ToDateTime(TimeOnly.MinValue) ?? DateTime.UtcNow;
         var endDate = input.ProjectEndDate ?? template.EndDate?.ToDateTime(TimeOnly.MinValue) ?? DateTime.UtcNow;
@@ -128,8 +159,9 @@ public class ProjectService : IProjectService
             throw new GraphQLException("Project not found");
 
         var name = input.Name.Trim();
+        var normalizedName = name.ToLowerInvariant();
 
-        if (await _db.Projects.AnyAsync(x => EF.Functions.ILike(x.Title, name) && x.ProjectId != id, cancellationToken))
+        if (await _db.Projects.AnyAsync(x => x.Title.ToLower() == normalizedName && x.ProjectId != id, cancellationToken))
         {
             throw new GraphQLException("Project title already exists.");
         }
