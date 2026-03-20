@@ -5,12 +5,49 @@ using Microsoft.EntityFrameworkCore;
 using EmployeeGraphQL.Infrastructure.Data;
 using FluentValidation;
 using Moq;
-using System.ComponentModel.DataAnnotations;
 using FluentValidation.Results;
 using HotChocolate;
 
 public class TemplateMutationTests_Unit
 {
+
+    private static AppDbContext CreateInMemoryDbContext(string? dbName = null)
+    {
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseInMemoryDatabase(dbName ?? Guid.NewGuid().ToString())
+            .Options;
+
+        return new AppDbContext(options);
+    }
+
+    private static IValidator<TemplateInput> CreateValidator(bool valid = true)
+    {
+        var validatorMock = new Mock<IValidator<TemplateInput>>();
+
+        if (valid)
+        {
+            validatorMock.Setup(v => v.ValidateAsync(It.IsAny<TemplateInput>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new FluentValidation.Results.ValidationResult());
+        }
+        else
+        {
+            validatorMock.Setup(v => v.ValidateAsync(It.IsAny<TemplateInput>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new FluentValidation.Results.ValidationResult(new[] { new ValidationFailure("Title", "Title is required") }));
+        }
+
+        return validatorMock.Object;
+    }
+
+    private static TemplateInput CreateBasicTemplateInput(string title = "Test Template")
+    {
+        return new TemplateInput
+        {
+            Title = title,
+            ProjectTypeId = 1,
+            SamparkTypeId = 1,
+            LocationScopeIds = "[1,2]"
+        };
+    }
 
   #region  template
   [Fact]
@@ -96,37 +133,22 @@ public class TemplateMutationTests_Unit
   public async Task CreateTemplate_ValidInput_ShouldSaveAndReturnEntity()
   {
     // Arrange
-    var options = new DbContextOptionsBuilder<AppDbContext>()
-        .UseInMemoryDatabase(Guid.NewGuid().ToString())
-        .Options;
+    using var db = CreateInMemoryDbContext();
 
-    var db = new AppDbContext(options);
-
-    var validator = new Mock<IValidator<TemplateInput>>();
-    validator.Setup(v => v.ValidateAsync(It.IsAny<TemplateInput>(), It.IsAny<CancellationToken>()))
-    .ReturnsAsync(new FluentValidation.Results.ValidationResult(
-        new List<FluentValidation.Results.ValidationFailure>()
-    ));
-
+    var validator = CreateValidator(valid: true);
     var mutation = new TemplateMutation();
 
-    var input = new TemplateInput
-    {
-      Title = "Test Template",
-      ProjectTypeId = 1,
-      SamparkTypeId = 1,
-      AllowedDraftProject = "YES"
-    };
+    var input = CreateBasicTemplateInput("Test Template");
+    input.AllowedDraftProject = "YES";
 
     // Act
-    var result = await mutation.CreateTemplate(input, db, validator.Object, CancellationToken.None);
+    var result = await mutation.CreateTemplate(input, db, validator, CancellationToken.None);
 
     // Assert
     Assert.NotNull(result);
     Assert.Equal("Test Template", result.Title);
 
-    // DB check 🔥
-    var saved = db.Set<Template>().FirstOrDefault();
+    var saved = await db.Templates.FirstOrDefaultAsync();
     Assert.NotNull(saved);
     Assert.Equal("Test Template", saved.Title);
   }
@@ -135,28 +157,50 @@ public class TemplateMutationTests_Unit
   public async Task CreateTemplate_InvalidInput_ShouldThrowException()
   {
     // Arrange
-    var options = new DbContextOptionsBuilder<AppDbContext>()
-        .UseInMemoryDatabase(Guid.NewGuid().ToString())
-        .Options;
-
-    var db = new AppDbContext(options);
-
-    var validator = new Mock<IValidator<TemplateInput>>();
-    validator.Setup(v => v.ValidateAsync(It.IsAny<TemplateInput>(), It.IsAny<CancellationToken>()))
-        .ReturnsAsync(new FluentValidation.Results.ValidationResult(
-            new List<FluentValidation.Results.ValidationFailure>
-            {
-                new FluentValidation.Results.ValidationFailure("Title", "Title required")
-            }
-        ));
-
+    using var db = CreateInMemoryDbContext();
+    var validator = CreateValidator(valid: false);
     var mutation = new TemplateMutation();
 
     var input = new TemplateInput(); // invalid
 
     // Act & Assert
-    await Assert.ThrowsAsync<GraphQLException>(() =>
-        mutation.CreateTemplate(input, db, validator.Object, CancellationToken.None));
+    var ex = await Assert.ThrowsAsync<GraphQLException>(() =>
+        mutation.CreateTemplate(input, db, validator, CancellationToken.None));
+
+    Assert.Equal("Validation failed", ex.Message);
+
+    var error = ex.Errors.First();
+    Assert.Equal("VALIDATION_ERROR", error.Code);
+    Assert.True(error.Extensions.ContainsKey("errors"));
+    var errors = error.Extensions["errors"] as List<string>;
+    Assert.NotNull(errors);
+    Assert.Contains("Title is required", errors);
+  }
+
+  [Fact]
+  public async Task CreateTemplate_WithTargetConfigs_ShouldPersistActiveConfigs()
+  {
+    using var db = CreateInMemoryDbContext();
+    var validator = CreateValidator(valid: true);
+    var mutation = new TemplateMutation();
+
+    var input = CreateBasicTemplateInput("Template With Targets");
+    input.AllowedDraftProject = "YES";
+    input.TargetConfigs = new List<TemplateTargetConfigInput>
+    {
+      new TemplateTargetConfigInput { ConfigType = "TYPE1", WingMale = true, WingFemale = false }
+    };
+
+    var result = await mutation.CreateTemplate(input, db, validator, CancellationToken.None);
+
+    Assert.NotNull(result);
+    Assert.Equal("Template With Targets", result.Title);
+    Assert.NotNull(result.TargetConfigs);
+    Assert.Single(result.TargetConfigs);
+
+    var saved = await db.Templates.Include(t => t.TargetConfigs).FirstOrDefaultAsync(x => x.TemplateId == result.TemplateId);
+    Assert.NotNull(saved);
+    Assert.True(saved.TargetConfigs.Any(x => x.ConfigType == "TYPE1" && x.Status == "ACTIVE"));
   }
   #endregion
 
