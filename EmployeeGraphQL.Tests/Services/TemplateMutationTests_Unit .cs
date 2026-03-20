@@ -202,6 +202,62 @@ public class TemplateMutationTests_Unit
     Assert.NotNull(saved);
     Assert.True(saved.TargetConfigs.Any(x => x.ConfigType == "TYPE1" && x.Status == "ACTIVE"));
   }
+
+  [Fact]
+  public async Task UpdateTemplate_ValidInput_ShouldUpdateExistingTemplate()
+  {
+    using var db = CreateInMemoryDbContext();
+    var validator = CreateValidator(valid: true);
+    var mutation = new TemplateMutation();
+
+    // first seed template
+    var existing = new Template
+    {
+      TemplateUucode = Guid.NewGuid(),
+      Title = "Original Title",
+      Description = "Original Description",
+      Status = "DRAFT",
+      ProjectTypeId = 1,
+      SamparkTypeId = 1,
+      AllowedDraftProject = "YES"
+    };
+
+    db.Templates.Add(existing);
+    await db.SaveChangesAsync();
+
+    // update body
+    var input = CreateBasicTemplateInput("Updated Title");
+    input.Description = "Updated Description";
+    input.AllowedDraftProject = "YES";
+
+    var result = await mutation.UpdateTemplate(existing.TemplateId, input, db, validator, CancellationToken.None);
+
+    Assert.NotNull(result);
+    Assert.Equal("Updated Title", result.Title);
+    Assert.Equal("Updated Description", result.Description);
+    Assert.Equal("DRAFT", result.Status);
+
+    var loaded = await db.Templates.FindAsync(existing.TemplateId);
+    Assert.NotNull(loaded);
+    Assert.Equal("Updated Title", loaded.Title);
+    Assert.Equal("Updated Description", loaded.Description);
+  }
+
+  [Fact]
+  public async Task UpdateTemplate_NonExistingId_ShouldThrowException()
+  {
+    using var db = CreateInMemoryDbContext();
+    var validator = CreateValidator(valid: true);
+    var mutation = new TemplateMutation();
+
+    var input = CreateBasicTemplateInput("Should Not Update");
+    input.AllowedDraftProject = "YES";
+
+    var ex = await Assert.ThrowsAsync<Exception>(async () =>
+        await mutation.UpdateTemplate(999, input, db, validator, CancellationToken.None));
+
+    Assert.Contains("Template with ID 999 not found", ex.Message);
+  }
   #endregion
 
   #region  ProjectFrequency

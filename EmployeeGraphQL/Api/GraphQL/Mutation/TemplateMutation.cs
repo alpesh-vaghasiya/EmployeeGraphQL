@@ -281,7 +281,7 @@ namespace Api.GraphQL
         }
 
         public async Task<Template> UpdateTemplate(
-            int id,
+            long id,
             TemplateInput input,
             [Service] AppDbContext db,
             [Service] IValidator<TemplateInput> validator,
@@ -291,13 +291,13 @@ namespace Api.GraphQL
         }
 
         public async Task<bool> DeleteTemplate(
-            int id,
+            long id,
             [Service] AppDbContext db,
             CancellationToken cancellationToken)
         {
             return await Delete(id, db, cancellationToken);
         }
-        public async Task<Template> PublishTemplate(int id, [Service] AppDbContext db, [Service] IFrequencyService frequencyService, CancellationToken cancellationToken)
+        public async Task<Template> PublishTemplate(long id, [Service] AppDbContext db, [Service] IFrequencyService frequencyService, CancellationToken cancellationToken)
         {
             var template = await db.Templates
                 .FirstOrDefaultAsync(x => x.TemplateId == id, cancellationToken);

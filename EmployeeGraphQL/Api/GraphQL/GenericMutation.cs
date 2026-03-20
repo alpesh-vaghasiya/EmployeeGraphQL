@@ -41,7 +41,7 @@ namespace Api.GraphQL
         }
 
         public async Task<TEntity> Update(
-            int id,
+            long id,
             TInput input,
             [Service] AppDbContext db,
             [Service] IValidator<TInput> validator,
@@ -78,7 +78,7 @@ namespace Api.GraphQL
         }
 
         public async Task<bool> Delete(
-            int id,
+            long id,
             [Service] AppDbContext db,
             CancellationToken cancellationToken)
         {
