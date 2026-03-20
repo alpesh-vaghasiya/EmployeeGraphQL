@@ -15,7 +15,7 @@ namespace Api.GraphQL
         }
 
         public async Task<Project> UpdateProject(
-            int id,
+            long id,
             ProjectInput input,
             [Service] IProjectService service,
             CancellationToken cancellationToken)
@@ -24,14 +24,14 @@ namespace Api.GraphQL
         }
 
         public async Task<bool> DeleteProject(
-            int id,
+            long id,
             [Service] IProjectService service,
             CancellationToken cancellationToken)
         {
             return await service.DeleteProject(id, cancellationToken);
         }
         public async Task<Project> PublishProject(
-        int id,
+        long id,
         [Service] IProjectService service,
         CancellationToken cancellationToken)
         {

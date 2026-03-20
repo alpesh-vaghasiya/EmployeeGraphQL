@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Api.GraphQL.Inputs;
 using EmployeeGraphQL.Domain.Entities;
 using EmployeeGraphQL.Infrastructure.Data;
@@ -335,5 +336,210 @@ public class ProjectServiceTests
         Assert.True(createdProject.ProjectStartDate <= after);
         Assert.True(createdProject.ProjectEndDate >= before);
         Assert.True(createdProject.ProjectEndDate <= after);
+    }
+
+    [Fact]
+    public async Task UpdateProject_ValidInput_UpdatesProjectFields()
+    {
+        var dbName = Guid.NewGuid().ToString();
+        using var dbContext = CreateInMemoryContext(dbName);
+
+        var project = new Project
+        {
+            ProjectUucode = Guid.NewGuid(),
+            TemplateId = 100,
+            Title = "Original Title",
+            Description = "Original",
+            Status = "DRAFT",
+            ProjectStartDate = DateTime.UtcNow.Date.AddDays(1),
+            ProjectEndDate = DateTime.UtcNow.Date.AddDays(5),
+            ReminderFrequency = "DAILY",
+            ReminderFrequencyConfig = "{\"frequency\":\"DAILY\",\"time\":\"08:00:00\"}"
+        };
+
+        dbContext.Projects.Add(project);
+        await dbContext.SaveChangesAsync();
+
+        var service = CreateService(dbContext);
+
+        var updateInput = new ProjectInput
+        {
+            Name = "  Updated Title  ",
+            TemplateId = project.TemplateId,
+            Description = "Updated desc",
+            ProjectStartDate = project.ProjectStartDate.AddDays(1),
+            ProjectEndDate = project.ProjectEndDate.AddDays(1),
+            ReminderFrequency = "WEEKLY",
+            ReminderFrequencyConfig = new ReminderConfigInput { Frequency = "WEEKLY", Time = "09:00:00" }
+        };
+
+        var updatedProject = await service.UpdateProject(project.ProjectId, updateInput, CancellationToken.None);
+
+        Assert.NotNull(updatedProject);
+        Assert.Equal("Updated Title", updatedProject.Title);
+        Assert.Equal("Updated desc", updatedProject.Description);
+        Assert.Equal(updateInput.ProjectStartDate, updatedProject.ProjectStartDate);
+        Assert.Equal(updateInput.ProjectEndDate, updatedProject.ProjectEndDate);
+        Assert.Equal("WEEKLY", updatedProject.ReminderFrequency);
+        Assert.True(!string.IsNullOrEmpty(updatedProject.ReminderFrequencyConfig));
+
+        var parsedConfig = JsonSerializer.Deserialize<ReminderConfigInput>(updatedProject.ReminderFrequencyConfig!);
+        Assert.NotNull(parsedConfig);
+        Assert.Equal("WEEKLY", parsedConfig!.Frequency);
+        Assert.Equal("09:00:00", parsedConfig.Time);
+
+        Assert.True(updatedProject.UpdatedAt.HasValue);
+
+        var found = await dbContext.Projects.FindAsync(project.ProjectId);
+        Assert.NotNull(found);
+        Assert.Equal("Updated Title", found.Title);
+        Assert.Equal("Updated desc", found.Description);
+    }
+
+    [Fact]
+    public async Task UpdateProject_IdNotFound_ThrowsGraphQLException()
+    {
+        var dbName = Guid.NewGuid().ToString();
+        using var dbContext = CreateInMemoryContext(dbName);
+
+        var service = CreateService(dbContext);
+
+        var input = new ProjectInput
+        {
+            Name = "Doesnt Matter",
+            TemplateId = 10
+        };
+
+        var ex = await Assert.ThrowsAsync<GraphQLException>(() => service.UpdateProject(999, input, CancellationToken.None));
+        Assert.Equal("Project not found", ex.Message);
+    }
+
+    [Fact]
+    public async Task UpdateProject_DuplicateTitle_ThrowsGraphQLException()
+    {
+        var dbName = Guid.NewGuid().ToString();
+        using var dbContext = CreateInMemoryContext(dbName);
+
+        dbContext.Projects.Add(new Project
+        {
+            ProjectUucode = Guid.NewGuid(),
+            TemplateId = 1,
+            Title = "Existing Project",
+            Status = "DRAFT",
+            ProjectStartDate = DateTime.UtcNow,
+            ProjectEndDate = DateTime.UtcNow.AddDays(1),
+        });
+
+        dbContext.Projects.Add(new Project
+        {
+            ProjectUucode = Guid.NewGuid(),
+            TemplateId = 1,
+            Title = "ToUpdate",
+            Status = "DRAFT",
+            ProjectStartDate = DateTime.UtcNow,
+            ProjectEndDate = DateTime.UtcNow.AddDays(1),
+        });
+
+        await dbContext.SaveChangesAsync();
+
+        var service = CreateService(dbContext);
+
+        var input = new ProjectInput
+        {
+            Name = "existing project",
+            TemplateId = 1
+        };
+
+        var secondProject = await dbContext.Projects.FirstOrDefaultAsync(p => p.Title == "ToUpdate");
+        var ex = await Assert.ThrowsAsync<GraphQLException>(() => service.UpdateProject(secondProject.ProjectId, input, CancellationToken.None));
+
+        Assert.Equal("Project title already exists.", ex.Message);
+    }
+
+    [Fact]
+    public async Task UpdateProject_InvalidInput_ThrowsGraphQLExceptionWithValidationErrors()
+    {
+        var dbName = Guid.NewGuid().ToString();
+        using var dbContext = CreateInMemoryContext(dbName);
+
+        var project = new Project
+        {
+            ProjectUucode = Guid.NewGuid(),
+            TemplateId = 1,
+            Title = "ToUpdate",
+            Status = "DRAFT",
+            ProjectStartDate = DateTime.UtcNow,
+            ProjectEndDate = DateTime.UtcNow.AddDays(1)
+        };
+
+        dbContext.Projects.Add(project);
+        await dbContext.SaveChangesAsync();
+
+        var validatorMock = new Mock<IValidator<ProjectInput>>();
+        var validationFailures = new List<ValidationFailure>
+        {
+            new ValidationFailure("Name", "Name is required")
+        };
+        validatorMock.Setup(v => v.ValidateAsync(It.IsAny<ProjectInput>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ValidationResult(validationFailures));
+
+        var service = CreateService(dbContext, validatorMock);
+
+        var updateInput = new ProjectInput
+        {
+            Name = "",
+            TemplateId = 1
+        };
+
+        var ex = await Assert.ThrowsAsync<GraphQLException>(() => service.UpdateProject(project.ProjectId, updateInput, CancellationToken.None));
+
+        var graphQLError = ex.Errors.First();
+        Assert.Equal("Validation failed", graphQLError.Message);
+
+        var errors = graphQLError.Extensions["errors"] as List<string>;
+        Assert.NotNull(errors);
+        Assert.Contains("Name is required", errors);
+    }
+
+    [Fact]
+    public async Task DeleteProject_ExistingProject_ReturnsTrueAndDeletesProject()
+    {
+        var dbName = Guid.NewGuid().ToString();
+        using var dbContext = CreateInMemoryContext(dbName);
+
+        var project = new Project
+        {
+            ProjectUucode = Guid.NewGuid(),
+            TemplateId = 1,
+            Title = "DeleteMe",
+            Status = "DRAFT",
+            ProjectStartDate = DateTime.UtcNow,
+            ProjectEndDate = DateTime.UtcNow.AddDays(1),
+            Description = "To be deleted"
+        };
+
+        dbContext.Projects.Add(project);
+        await dbContext.SaveChangesAsync();
+
+        var service = CreateService(dbContext);
+
+        var result = await service.DeleteProject(project.ProjectId, CancellationToken.None);
+
+        Assert.True(result);
+
+        var found = await dbContext.Projects.FindAsync(project.ProjectId);
+        Assert.Null(found);
+    }
+
+    [Fact]
+    public async Task DeleteProject_NonExistingProject_ThrowsGraphQLException()
+    {
+        var dbName = Guid.NewGuid().ToString();
+        using var dbContext = CreateInMemoryContext(dbName);
+
+        var service = CreateService(dbContext);
+
+        var ex = await Assert.ThrowsAsync<GraphQLException>(() => service.DeleteProject(999, CancellationToken.None));
+        Assert.Equal("Project not found", ex.Message);
     }
 }

@@ -144,7 +144,7 @@ public class ProjectService : IProjectService
     }
 
     // UPDATE
-    public async Task<Project> UpdateProject(int id, ProjectInput input, CancellationToken cancellationToken)
+    public async Task<Project> UpdateProject(long id, ProjectInput input, CancellationToken cancellationToken)
     {
         var validationResult = await _validator.ValidateAsync(input, cancellationToken);
         if (!validationResult.IsValid)
@@ -180,7 +180,7 @@ public class ProjectService : IProjectService
     }
 
     // DELETE
-    public async Task<bool> DeleteProject(int id, CancellationToken cancellationToken)
+    public async Task<bool> DeleteProject(long id, CancellationToken cancellationToken)
     {
         var project = await _db.Projects.FirstOrDefaultAsync(x => x.ProjectId == id, cancellationToken);
 
@@ -192,7 +192,7 @@ public class ProjectService : IProjectService
 
         return true;
     }
-    public async Task<Project> PublishProject(int id, CancellationToken cancellationToken)
+    public async Task<Project> PublishProject(long id, CancellationToken cancellationToken)
     {
         var project = await _db.Projects
             .FirstOrDefaultAsync(x => x.ProjectId == id, cancellationToken);
