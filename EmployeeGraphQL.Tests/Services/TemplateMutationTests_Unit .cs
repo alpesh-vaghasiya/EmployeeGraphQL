@@ -7,6 +7,7 @@ using FluentValidation;
 using Moq;
 using FluentValidation.Results;
 using HotChocolate;
+using System.Text.Json;
 
 public class TemplateMutationTests_Unit
 {
@@ -257,6 +258,84 @@ public class TemplateMutationTests_Unit
         await mutation.UpdateTemplate(999, input, db, validator, CancellationToken.None));
 
     Assert.Contains("Template with ID 999 not found", ex.Message);
+  }
+
+  [Fact]
+  public async Task PublishTemplate_ValidInput_ShouldPublishTemplateAndCreateSchedules()
+  {
+    using var db = CreateInMemoryDbContext();
+    var mutation = new TemplateMutation();
+
+    var template = new Template
+    {
+      TemplateUucode = Guid.NewGuid(),
+      Title = "Publish Template OK",
+      Status = "DRAFT",
+      ProjectTypeId = 1,
+      SamparkTypeId = 1,
+      AllowedDraftProject = "YES",
+      ProjectRepeateFrequencyConfig = JsonSerializer.Serialize(new ProjectFrequencyInput
+      {
+        Type = "repeat",
+        CreateProjectTimes = 2,
+        RepeatEvery = 1,
+        RepeatUnit = "days",
+        MinDurationDays = 1,
+        MaxDurationDays = 10
+      })
+    };
+
+    db.Templates.Add(template);
+    await db.SaveChangesAsync();
+
+    var frequencyService = new Mock<IFrequencyService>();
+    var scheduleDates = new List<DateOnly>
+    {
+      DateOnly.FromDateTime(DateTime.UtcNow),
+      DateOnly.FromDateTime(DateTime.UtcNow.AddDays(1))
+    };
+
+    frequencyService
+      .Setup(x => x.GenerateDates(It.IsAny<ProjectFrequencyInput>()))
+      .Returns(scheduleDates);
+
+    var result = await mutation.PublishTemplate(template.TemplateId, db, frequencyService.Object, CancellationToken.None);
+
+    Assert.NotNull(result);
+    Assert.Equal("PUBLISH", result.Status);
+
+    var schedules = await db.ProjectSchedules.Where(x => x.TemplateId == template.TemplateId).ToListAsync();
+    Assert.Equal(scheduleDates.Count, schedules.Count);
+    Assert.All(schedules, s => Assert.Equal("PENDING", s.Status));
+  }
+
+  [Fact]
+  public async Task PublishTemplate_MissingConfig_ShouldThrowGraphQLException()
+  {
+    using var db = CreateInMemoryDbContext();
+    var mutation = new TemplateMutation();
+
+    var template = new Template
+    {
+      TemplateUucode = Guid.NewGuid(),
+      Title = "Publish Template No Config",
+      Status = "DRAFT",
+      ProjectTypeId = 1,
+      SamparkTypeId = 1,
+      AllowedDraftProject = "YES",
+      ProjectRepeateFrequencyConfig = null
+    };
+
+    db.Templates.Add(template);
+    await db.SaveChangesAsync();
+
+    var frequencyService = new Mock<IFrequencyService>();
+
+    var ex = await Assert.ThrowsAsync<GraphQLException>(async () =>
+      await mutation.PublishTemplate(template.TemplateId, db, frequencyService.Object, CancellationToken.None));
+
+    Assert.Equal("Frequency configuration not found", ex.Message);
+    Assert.Equal("INVALID_DATA", ex.Errors.First().Code);
   }
   #endregion
 
