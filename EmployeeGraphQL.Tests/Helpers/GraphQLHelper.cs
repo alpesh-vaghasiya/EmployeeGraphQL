@@ -32,4 +32,18 @@ public class GraphQLHelper
 
         return await _client.SendAsync(request);
     }
+
+    public async Task<HttpResponseMessage> ExecuteMutation(string mutation, object? variables = null)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Post, "/graphql");
+
+        request.Content = JsonContent.Create(new { query = mutation, variables });
+
+        request.Headers.Add("Authorization", $"Bearer {_token}");
+        request.Headers.Add("X-App-Position", _position);
+        request.Headers.Add("X-App-Event", "1");
+        request.Headers.Add("departmentId", "100");
+
+        return await _client.SendAsync(request);
+    }
 }

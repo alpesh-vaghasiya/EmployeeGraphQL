@@ -126,7 +126,7 @@ builder.Services
    .ModifyCostOptions(opt =>
     {
         opt.EnforceCostLimits = true;
-        opt.MaxFieldCost = 100;
+        opt.MaxFieldCost = 50000;
     })
     .AddQueryType<Query>()
     .AddType<TemplateQuery>()
