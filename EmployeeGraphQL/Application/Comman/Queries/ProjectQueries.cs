@@ -57,4 +57,20 @@ public static class ProjectQueries
         LIMIT @PageSize OFFSET @Offset;
 
     ";
+
+    public const string GetEntityWithChildren = @"
+        WITH RECURSIVE entity_tree AS (
+            SELECT e.entity_id
+            FROM public.entity e
+            WHERE e.entity_id = @EntityId
+
+            UNION ALL
+
+            SELECT c.entity_id
+            FROM public.entity c
+            INNER JOIN entity_tree et ON c.parent_entity_id = et.entity_id
+        )
+        SELECT entity_id AS EntityId
+        FROM entity_tree;
+    ";
 }

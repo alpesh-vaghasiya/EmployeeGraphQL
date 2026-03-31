@@ -142,6 +142,7 @@ builder.Services
     .AddTypeExtension<FileQuery>()
     .AddTypeExtension<MISQuery>()
     .AddTypeExtension<GSSQuery>()
+    .AddTypeExtension<EntityQuery>()
     .AddTypeExtension<FileMutation>()
     .AddUploadType()
     .AddProjections()

@@ -31,6 +31,7 @@ public partial class AppDbContext : DbContext
 
     public DbSet<EmployeeProject> EmployeeProjects { get; set; }
     public DbSet<ProjectSchedule> ProjectSchedules { get; set; }
+    public DbSet<Entity> Entities { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
