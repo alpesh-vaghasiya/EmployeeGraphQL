@@ -73,8 +73,9 @@ public class ProjectService : IProjectService
 
         var name = input.Name.Trim();
         var normalizedName = name.ToLowerInvariant();
+        var locationIdStr = input.LocationId?.ToString();
 
-        if (await _db.Projects.AnyAsync(x => (x.Title.ToLower() == normalizedName && x.LocationId == input.LocationId.ToString()), cancellationToken))
+        if (await _db.Projects.AnyAsync(x => x.Title.ToLower() == normalizedName && x.LocationId == locationIdStr, cancellationToken))
         {
             throw new GraphQLException("Project title already exists.");
         }
