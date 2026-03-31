@@ -1,7 +1,9 @@
 using Api.GraphQL.Auth;
+using EmployeeGraphQL.Api.GraphQL.Filters;
 using EmployeeGraphQL.Domain.Entities;
 using EmployeeGraphQL.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 
 namespace Api.GraphQL;
 
@@ -13,8 +15,13 @@ public partial class TemplateQuery
     [UseFiltering]
     [UseSorting]
     [ModuleAuthorize(new[] { SystemModuleCode.EventGroup }, new[] { ModuleAction.View })]
-    public IQueryable<Template> GetTemplates([Service] AppDbContext context)
-        => context.Templates.AsNoTracking();
+    public IQueryable<Template> GetTemplates(List<int>? locationScopeIds, [Service] AppDbContext context, [Service] IConfiguration config)
+    {
+        var query = context.Templates.AsNoTracking()
+        .FilterByEntityScopeAsync(10, config).GetAwaiter().GetResult()
+        .FilterByLocationScope(locationScopeIds);
+        return query;
+    }
 
     [UseFirstOrDefault]
     [UseProjection]
