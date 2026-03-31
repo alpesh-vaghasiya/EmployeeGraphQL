@@ -9,4 +9,5 @@ public class ProjectInput
     public DateTime? ProjectEndDate { get; set; }
     public string? ReminderFrequency { get; set; }
     public ReminderConfigInput? ReminderFrequencyConfig { get; set; }
+    public long? LocationId { get; set; }
 }

@@ -74,7 +74,7 @@ public class ProjectService : IProjectService
         var name = input.Name.Trim();
         var normalizedName = name.ToLowerInvariant();
 
-        if (await _db.Projects.AnyAsync(x => x.Title.ToLower() == normalizedName, cancellationToken))
+        if (await _db.Projects.AnyAsync(x => (x.Title.ToLower() == normalizedName && x.LocationId == input.LocationId.ToString()), cancellationToken))
         {
             throw new GraphQLException("Project title already exists.");
         }
@@ -115,8 +115,19 @@ public class ProjectService : IProjectService
             }
         }
 
-        var startDate = input.ProjectStartDate ?? template.StartDate?.ToDateTime(TimeOnly.MinValue) ?? DateTime.UtcNow;
-        var endDate = input.ProjectEndDate ?? template.EndDate?.ToDateTime(TimeOnly.MinValue) ?? DateTime.UtcNow;
+        var startDate = input.ProjectStartDate
+     ?? (template.StartDate.HasValue
+         ? DateTime.SpecifyKind(
+             template.StartDate.Value.ToDateTime(TimeOnly.MinValue),
+             DateTimeKind.Utc)
+         : DateTime.UtcNow);
+
+        var endDate = input.ProjectEndDate
+            ?? (template.EndDate.HasValue
+                ? DateTime.SpecifyKind(
+                    template.EndDate.Value.ToDateTime(TimeOnly.MinValue),
+                    DateTimeKind.Utc)
+                : DateTime.UtcNow);
 
         var reminderFrequencyConfig = template.ReminderFrequencyConfig;
 
@@ -135,6 +146,7 @@ public class ProjectService : IProjectService
             Description = input.Description,
             ReminderFrequency = input.ReminderFrequency,
             ReminderFrequencyConfig = reminderFrequencyConfig,
+            LocationId = input.LocationId?.ToString(),
         };
 
         _db.Projects.Add(project);
