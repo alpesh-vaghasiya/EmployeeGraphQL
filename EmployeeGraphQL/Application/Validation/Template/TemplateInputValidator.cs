@@ -18,5 +18,9 @@ public class TemplateInputValidator : AbstractValidator<TemplateInput>
             .NotNull().WithMessage("EndDate is required.")
             .GreaterThan(x => x.StartDate)
             .When(x => x.StartDate != null);
+
+        // nested json validation
+        RuleFor(x => x.ProjectRepeateFrequencyConfig)
+            .SetValidator(new ProjectFrequencyValidator()!);
     }
 }

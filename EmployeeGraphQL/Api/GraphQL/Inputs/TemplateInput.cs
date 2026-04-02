@@ -48,7 +48,7 @@ public class ProjectFrequencyInput
 
     public DateTime? EndDate { get; set; }
 
-    public int CreateProjectTimes { get; set; }   // Create project 3 times
+    public int? CreateProjectTimes { get; set; }   // Create project 3 times
 
     public int? RepeatEvery { get; set; }         // 15 days / 1 week / 1 month
 
