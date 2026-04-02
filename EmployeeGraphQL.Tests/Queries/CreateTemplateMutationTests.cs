@@ -382,4 +382,90 @@ public class CreateTemplateFrequencyTests : IClassFixture<TestFactory>
 
         content.Should().Contain("MaxDurationDays");
     }
+
+    // once: totalDays < minDurationDays (new explicit rule)
+    [Fact]
+    public async Task Should_Return_Error_When_Once_TotalDuration_Less_Than_MinDays()
+    {
+        var config = @"
+    {
+        type:""once"",
+        startDate:""2026-04-01T00:00:00Z"",
+        endDate:""2026-04-05T00:00:00Z"",
+        minDurationDays:10,
+        maxDurationDays:10
+    }";
+
+        var response = await _graphQL.ExecuteMutation(BuildMutation(config));
+        var content  = await response.Content.ReadAsStringAsync();
+
+        content.Should().Contain("MinDurationDays");
+    }
+
+    // repeat: maxDurationDays exceeds total duration days
+    [Fact]
+    public async Task Should_Return_Error_When_Repeat_MaxDuration_Exceeds_Duration()
+    {
+        var config = @"
+    {
+        type:""repeat"",
+        startDate:""2026-04-01T00:00:00Z"",
+        endDate:""2026-04-10T00:00:00Z"",
+        repeatEvery:5,
+        repeatUnit:""days"",
+        minDurationDays:3,
+        maxDurationDays:20
+    }";
+
+        var response = await _graphQL.ExecuteMutation(BuildMutation(config));
+        var content  = await response.Content.ReadAsStringAsync();
+
+        content.Should().Contain("MaxDurationDays");
+    }
+
+    // repeat: minDurationDays > maxDurationDays (new rule)
+    [Fact]
+    public async Task Should_Return_Error_When_Repeat_MinMax_Duration_Invalid()
+    {
+        var config = @"
+    {
+        type:""repeat"",
+        startDate:""2026-04-01T00:00:00Z"",
+        endDate:""2026-12-31T00:00:00Z"",
+        repeatEvery:5,
+        repeatUnit:""days"",
+        minDurationDays:30,
+        maxDurationDays:10
+    }";
+
+        var response = await _graphQL.ExecuteMutation(BuildMutation(config));
+        var content  = await response.Content.ReadAsStringAsync();
+
+        content.Should().Contain("MinDurationDays");
+    }
+
+    // adhoc: adhocDates count > createProjectTimes (new rule)
+    [Fact]
+    public async Task Should_Return_Error_When_AdhocDates_Exceed_CreateProjectTimes()
+    {
+        var config = @"
+    {
+        type:""adhoc"",
+        startDate:""2026-04-01T00:00:00Z"",
+        endDate:""2026-12-31T00:00:00Z"",
+        createProjectTimes:1,
+        adhocDates:[
+            ""2026-04-10T00:00:00Z"",
+            ""2026-05-15T00:00:00Z"",
+            ""2026-06-20T00:00:00Z""
+        ],
+        minDurationDays:5,
+        maxDurationDays:30
+    }";
+
+        var response = await _graphQL.ExecuteMutation(BuildMutation(config));
+        var content  = await response.Content.ReadAsStringAsync();
+
+        content.Should().Contain("AdhocDates");
+    }
 }

@@ -31,6 +31,17 @@ public class ProjectFrequencyValidator : AbstractValidator<ProjectFrequencyInput
                 .WithMessage("MaxDurationDays cannot exceed total duration days");
 
             RuleFor(x => x)
+                .Must(x =>
+                {
+                    var totalDays = FrequencyValidationHelper.GetTotalDays(
+                        x.StartDate!.Value,
+                        x.EndDate!.Value);
+
+                    return totalDays >= x.MinDurationDays;
+                })
+                .WithMessage("Total duration days must be >= MinDurationDays");
+
+            RuleFor(x => x)
                 .Must(x => x.MinDurationDays <= x.MaxDurationDays)
                 .WithMessage("MinDurationDays must be <= MaxDurationDays");
         });
@@ -95,6 +106,11 @@ public class ProjectFrequencyValidator : AbstractValidator<ProjectFrequencyInput
                     .WithMessage("RepeatEvery months cannot exceed duration");
             });
 
+            // min/max duration check
+            RuleFor(x => x)
+                .Must(x => x.MinDurationDays <= x.MaxDurationDays)
+                .WithMessage("MinDurationDays must be <= MaxDurationDays");
+
             // max duration check
             RuleFor(x => x)
                 .Must(x =>
@@ -115,6 +131,12 @@ public class ProjectFrequencyValidator : AbstractValidator<ProjectFrequencyInput
         {
             RuleFor(x => x.CreateProjectTimes)
                 .GreaterThan(0);
+
+            RuleFor(x => x)
+                .Must(x =>
+                    x.AdhocDates == null ||
+                    x.AdhocDates.Count <= (x.CreateProjectTimes ?? int.MaxValue))
+                .WithMessage("AdhocDates count cannot exceed CreateProjectTimes");
 
             RuleFor(x => x)
                 .Must(x =>
