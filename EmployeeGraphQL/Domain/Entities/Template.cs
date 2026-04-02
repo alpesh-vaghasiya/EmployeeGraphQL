@@ -23,7 +23,7 @@ public partial class Template
 
     public long? LocationLevelId { get; set; }
 
-    public string AllowedDraftProject { get; set; } = null!;
+    public string? AllowedDraftProject { get; set; }
 
     public bool? DefaultProjectCreation { get; set; }
 
